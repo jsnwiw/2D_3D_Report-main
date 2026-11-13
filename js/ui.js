@@ -158,6 +158,14 @@ export function initSystemInfo() {
     const gpuEl = $('system-gpu');
     const gpuEngineEl = $('gpu-engine-info');
 
+    // 실시간 감지된 하드웨어 정보를 gpuEngineState에 반영
+    if (info.gpuRenderer && info.gpuRenderer !== '감지 중...') {
+        appState.gpuEngineState.gpuName = info.gpuRenderer;
+    }
+    if (info.gpuVendor && info.gpuVendor !== '감지 중...') {
+        appState.gpuEngineState.vendor = info.gpuVendor;
+    }
+
     if (platformEl) platformEl.textContent = `🖥 플랫폼: ${info.platform}`;
     if (manufacturerEl) manufacturerEl.textContent = `🏭 GPU 제조사: ${info.gpuVendor}`;
     if (cpuEl) cpuEl.textContent = `⚙️ CPU 코어: ${info.cpuCores}코어`;
@@ -165,6 +173,25 @@ export function initSystemInfo() {
     if (gpuEngineEl) {
         const engine = appState.gpuEngineState;
         gpuEngineEl.textContent = `⚡ 엔진: ${engine.backendName}`;
+    }
+
+    // GPU 모달 요소도 실제 감지값으로 즉시 채우기 (모달 열기 전에도 준비)
+    const modalPlatform = $('modal-system-platform');
+    const modalCpu = $('modal-system-cpu');
+    const modalGpuApi = $('modal-gpu-api');
+    const modalGpuDevice = $('modal-gpu-device');
+    const modalGpuVendor = $('modal-gpu-vendor');
+    const modalGpuArchitecture = $('modal-gpu-architecture');
+    const modalGpuFeatures = $('modal-gpu-features');
+
+    if (modalPlatform) modalPlatform.textContent = info.platform;
+    if (modalCpu) modalCpu.textContent = `${info.cpuCores}코어`;
+    if (modalGpuApi) modalGpuApi.textContent = appState.gpuEngineState.backendName;
+    if (modalGpuDevice) modalGpuDevice.textContent = appState.gpuEngineState.gpuName;
+    if (modalGpuVendor) modalGpuVendor.textContent = appState.gpuEngineState.vendor;
+    if (modalGpuArchitecture) modalGpuArchitecture.textContent = appState.gpuEngineState.architecture;
+    if (modalGpuFeatures && appState.gpuEngineState.featuresCount > 0) {
+        modalGpuFeatures.textContent = `${appState.gpuEngineState.featuresCount}개 하드웨어 기능 활성화됨`;
     }
 }
 

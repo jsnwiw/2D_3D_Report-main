@@ -49,11 +49,14 @@ export async function initThreeScene() {
             if (adapter) {
                 const info = await adapter.requestAdapterInfo?.();
                 if (info) {
-                    appState.gpuEngineState.gpuName = info.device || info.description || appState.gpuEngineState.gpuName;
-                    appState.gpuEngineState.vendor = info.vendor || appState.gpuEngineState.vendor;
-                    appState.gpuEngineState.architecture = info.architecture || appState.gpuEngineState.architecture;
+                    if (info.device) appState.gpuEngineState.gpuName = info.device;
+                    if (info.description) appState.gpuEngineState.gpuName = info.description;
+                    if (info.vendor) appState.gpuEngineState.vendor = info.vendor;
+                    if (info.architecture) appState.gpuEngineState.architecture = info.architecture;
                 }
                 appState.gpuEngineState.featuresCount = adapter.features?.size || 0;
+                appState.gpuEngineState.isWebGPU = true;
+                appState.gpuEngineState.backendName = 'WebGPU (Vulkan / Direct3D 12 Low-level)';
                 const badge = $('gpu-engine-text');
                 if (badge) badge.textContent = '⚡ Vulkan / WebGPU';
             }
@@ -61,6 +64,48 @@ export async function initThreeScene() {
             console.warn('WebGPU 어댑터 정보 조회 실패:', e);
         }
     }
+
+    // WebGL fallback으로 실제 GPU 렌더러/벤더 보강 (WebGPU adapter info가 빈 문자열일 때)
+    try {
+        const glCanvas = document.createElement('canvas');
+        const gl = glCanvas.getContext('webgl') || glCanvas.getContext('experimental-webgl');
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+                const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                if (renderer && (!appState.gpuEngineState.gpuName || appState.gpuEngineState.gpuName === '하드웨어 감지 중...')) {
+                    appState.gpuEngineState.gpuName = renderer;
+                }
+                if (vendor && (!appState.gpuEngineState.vendor || appState.gpuEngineState.vendor === '감지 중...')) {
+                    appState.gpuEngineState.vendor = vendor;
+                }
+            }
+        }
+    } catch (e) { /* ignore */ }
+
+    // 아키텍처 자동 판별
+    if (!appState.gpuEngineState.architecture || appState.gpuEngineState.architecture === '감지 중...') {
+        appState.gpuEngineState.architecture = appState.gpuEngineState.isWebGPU ? 'WGSL Low-level Pipeline' : 'GLSL Standard Pipeline';
+    }
+
+    // 감지 완료 후 GPU 모달 요소 즉시 갱신
+    const _mp = $('modal-system-platform');
+    const _mc = $('modal-system-cpu');
+    const _ma = $('modal-gpu-api');
+    const _md = $('modal-gpu-device');
+    const _mv = $('modal-gpu-vendor');
+    const _mar = $('modal-gpu-architecture');
+    const _mf = $('modal-gpu-features');
+    if (_mp) _mp.textContent = navigator.platform || 'Unknown';
+    if (_mc) _mc.textContent = `${navigator.hardwareConcurrency || '?'}코어`;
+    if (_ma) _ma.textContent = appState.gpuEngineState.backendName;
+    if (_md) _md.textContent = appState.gpuEngineState.gpuName;
+    if (_mv) _mv.textContent = appState.gpuEngineState.vendor;
+    if (_mar) _mar.textContent = appState.gpuEngineState.architecture;
+    if (_mf) _mf.textContent = appState.gpuEngineState.featuresCount > 0
+        ? `${appState.gpuEngineState.featuresCount}개 하드웨어 기능 활성화됨`
+        : '감지 불가';
 
     appState.renderer.setSize(window.innerWidth, window.innerHeight);
     appState.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));

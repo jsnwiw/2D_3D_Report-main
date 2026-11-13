@@ -11,8 +11,8 @@ export const $ = id => document.getElementById(id);
 export function getSystemInfo() {
     const platform = navigator.platform || 'Win32';
     const cpuCores = navigator.hardwareConcurrency || 4;
-    let gpuRenderer = 'ANGLE (NVIDIA, NVIDIA GeForce GTX 650 Ti (0x000011C6) Direct3D11 vs_5_0 ps_5_0, D3D11)';
-    let gpuVendor = 'Google Inc. (NVIDIA)';
+    let gpuRenderer = '감지 중...';
+    let gpuVendor = '감지 중...';
     try {
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -64,10 +64,10 @@ export const appState = {
     gpuEngineState: {
         isWebGPU: true,
         backendName: 'WebGPU (Vulkan / Direct3D 12 Low-level)',
-        gpuName: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 650 Ti (0x000011C6) Direct3D11 vs_5_0 ps_5_0, D3D11)',
-        vendor: 'Google Inc. (NVIDIA)',
-        architecture: 'WGSL Low-level Pipeline',
-        featuresCount: 64,
+        gpuName: '하드웨어 감지 중...',
+        vendor: '감지 중...',
+        architecture: '감지 중...',
+        featuresCount: 0,
         fps: 0,
         frameTimeMs: '0.0',
         minFps: 999,
