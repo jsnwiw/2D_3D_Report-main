@@ -254,7 +254,7 @@ export function printCurrentReport() {
 }
 
 /**
- * 🤖 ✨ AI 보고서 자동 작성 메인 컨트롤러
+ *  ✨ AI 보고서 자동 작성 메인 컨트롤러
  */
 export async function generateAIReport(options = {}) {
     const aiReportType = $('ai-report-type');
@@ -337,7 +337,7 @@ export async function generateAIReport(options = {}) {
         const top3Sum = sortedDesc.slice(0, 3).reduce((acc, cur) => acc + cur.value, 0);
         const top3Share = sum > 0 ? ((top3Sum / sum) * 100).toFixed(1) : '0';
 
-        // 🤖 데이터 특성 기반 AI 최적 보고서 유형 자동 추론
+        //  데이터 특성 기반 AI 최적 보고서 유형 자동 추론
         const recommendedReport = inferBestReportType({
             yColName, count, mean, median, cv, outliers,
             top20Share, topBottomRatio,
