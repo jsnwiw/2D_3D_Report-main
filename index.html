@@ -32,8 +32,94 @@
     <link rel="stylesheet" href="style.css">
     <!-- 2D 보조 차트 렌더링 라이브러리 (Chart.js v4) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- Chrome 힙 메모리 (performance.memory) 표시 (Chrome 전용) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>페이지 힙 메모리 (Chrome 전용)</h3>
+  <p id="heap-display">확인 중…</p>
+</div>
+
+<!-- 사용자가 직접 RAM 입력 (정확한 값) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>정확한 RAM 입력 (GB)</h3>
+  <input id="user-ram" type="number" min="0" step="0.1" placeholder="예: 12" style="width:80px;"/>
+  <button id="apply-ram" class="tool" style="margin-left:4px;">적용</button>
+  <p id="user-ram-display" style="margin-top:4px;">아직 입력되지 않음</p>
+</div>
+
+<script type="module">
+  // 힙 메모리 표시 (Chrome 전용)
+  function updateHeapDisplay() {
+    const el = document.getElementById('heap-display');
+    if (typeof performance !== 'undefined' && performance.memory) {
+      const used = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+      const total = Math.round(performance.memory.totalJSHeapSize / 1024 / 1024);
+      el.textContent = `사용 중: ${used} MB / 총: ${total} MB`;
+    } else {
+      el.textContent = '이 브라우저는 performance.memory를 지원하지 않습니다.';
+    }
+  }
+  // 초기 표시 & 포커스 복귀 시 갱신
+  if (document.readyState !== 'loading') updateHeapDisplay();
+  else document.addEventListener('DOMContentLoaded', updateHeapDisplay);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHeapDisplay(); });
+
+  // 사용자가 입력한 RAM 값 표시
+  document.getElementById('apply-ram').addEventListener('click', () => {
+    const val = document.getElementById('user-ram').value;
+    const disp = document.getElementById('user-ram-display');
+    if (val && !isNaN(val)) {
+      disp.textContent = `입력된 RAM: ${val} GB`;
+    } else {
+      disp.textContent = '올바른 숫자를 입력하세요.';
+    }
+  });
+</script>
     <!-- 엑셀(.xlsx, .xls) 바이너리 파싱 지원 SheetJS 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- Chrome 힙 메모리 (performance.memory) 표시 (Chrome 전용) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>페이지 힙 메모리 (Chrome 전용)</h3>
+  <p id="heap-display">확인 중…</p>
+</div>
+
+<!-- 사용자가 직접 RAM 입력 (정확한 값) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>정확한 RAM 입력 (GB)</h3>
+  <input id="user-ram" type="number" min="0" step="0.1" placeholder="예: 12" style="width:80px;"/>
+  <button id="apply-ram" class="tool" style="margin-left:4px;">적용</button>
+  <p id="user-ram-display" style="margin-top:4px;">아직 입력되지 않음</p>
+</div>
+
+<script type="module">
+  // 힙 메모리 표시 (Chrome 전용)
+  function updateHeapDisplay() {
+    const el = document.getElementById('heap-display');
+    if (typeof performance !== 'undefined' && performance.memory) {
+      const used = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+      const total = Math.round(performance.memory.totalJSHeapSize / 1024 / 1024);
+      el.textContent = `사용 중: ${used} MB / 총: ${total} MB`;
+    } else {
+      el.textContent = '이 브라우저는 performance.memory를 지원하지 않습니다.';
+    }
+  }
+  // 초기 표시 & 포커스 복귀 시 갱신
+  if (document.readyState !== 'loading') updateHeapDisplay();
+  else document.addEventListener('DOMContentLoaded', updateHeapDisplay);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHeapDisplay(); });
+
+  // 사용자가 입력한 RAM 값 표시
+  document.getElementById('apply-ram').addEventListener('click', () => {
+    const val = document.getElementById('user-ram').value;
+    const disp = document.getElementById('user-ram-display');
+    if (val && !isNaN(val)) {
+      disp.textContent = `입력된 RAM: ${val} GB`;
+    } else {
+      disp.textContent = '올바른 숫자를 입력하세요.';
+    }
+  });
+</script>
     <!-- 초기 테마(다크/라이트) 깜빡임 방지 즉시 실행 스크립트 -->
     <script>
         (function() {
@@ -48,6 +134,49 @@
             } catch(e) {}
         })();
     </script>
+
+<!-- Chrome 힙 메모리 (performance.memory) 표시 (Chrome 전용) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>페이지 힙 메모리 (Chrome 전용)</h3>
+  <p id="heap-display">확인 중…</p>
+</div>
+
+<!-- 사용자가 직접 RAM 입력 (정확한 값) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>정확한 RAM 입력 (GB)</h3>
+  <input id="user-ram" type="number" min="0" step="0.1" placeholder="예: 12" style="width:80px;"/>
+  <button id="apply-ram" class="tool" style="margin-left:4px;">적용</button>
+  <p id="user-ram-display" style="margin-top:4px;">아직 입력되지 않음</p>
+</div>
+
+<script type="module">
+  // 힙 메모리 표시 (Chrome 전용)
+  function updateHeapDisplay() {
+    const el = document.getElementById('heap-display');
+    if (typeof performance !== 'undefined' && performance.memory) {
+      const used = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+      const total = Math.round(performance.memory.totalJSHeapSize / 1024 / 1024);
+      el.textContent = `사용 중: ${used} MB / 총: ${total} MB`;
+    } else {
+      el.textContent = '이 브라우저는 performance.memory를 지원하지 않습니다.';
+    }
+  }
+  // 초기 표시 & 포커스 복귀 시 갱신
+  if (document.readyState !== 'loading') updateHeapDisplay();
+  else document.addEventListener('DOMContentLoaded', updateHeapDisplay);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHeapDisplay(); });
+
+  // 사용자가 입력한 RAM 값 표시
+  document.getElementById('apply-ram').addEventListener('click', () => {
+    const val = document.getElementById('user-ram').value;
+    const disp = document.getElementById('user-ram-display');
+    if (val && !isNaN(val)) {
+      disp.textContent = `입력된 RAM: ${val} GB`;
+    } else {
+      disp.textContent = '올바른 숫자를 입력하세요.';
+    }
+  });
+</script>
 </head>
 <body>
 <header id="system-info" class="system-info no-print" style="display: none !important;">
@@ -88,6 +217,49 @@
   // 탭 포커스 재진입 시 자동 갱신
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) updateRamDisplay();
+  });
+</script>
+
+<!-- Chrome 힙 메모리 (performance.memory) 표시 (Chrome 전용) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>페이지 힙 메모리 (Chrome 전용)</h3>
+  <p id="heap-display">확인 중…</p>
+</div>
+
+<!-- 사용자가 직접 RAM 입력 (정확한 값) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>정확한 RAM 입력 (GB)</h3>
+  <input id="user-ram" type="number" min="0" step="0.1" placeholder="예: 12" style="width:80px;"/>
+  <button id="apply-ram" class="tool" style="margin-left:4px;">적용</button>
+  <p id="user-ram-display" style="margin-top:4px;">아직 입력되지 않음</p>
+</div>
+
+<script type="module">
+  // 힙 메모리 표시 (Chrome 전용)
+  function updateHeapDisplay() {
+    const el = document.getElementById('heap-display');
+    if (typeof performance !== 'undefined' && performance.memory) {
+      const used = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+      const total = Math.round(performance.memory.totalJSHeapSize / 1024 / 1024);
+      el.textContent = `사용 중: ${used} MB / 총: ${total} MB`;
+    } else {
+      el.textContent = '이 브라우저는 performance.memory를 지원하지 않습니다.';
+    }
+  }
+  // 초기 표시 & 포커스 복귀 시 갱신
+  if (document.readyState !== 'loading') updateHeapDisplay();
+  else document.addEventListener('DOMContentLoaded', updateHeapDisplay);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHeapDisplay(); });
+
+  // 사용자가 입력한 RAM 값 표시
+  document.getElementById('apply-ram').addEventListener('click', () => {
+    const val = document.getElementById('user-ram').value;
+    const disp = document.getElementById('user-ram-display');
+    if (val && !isNaN(val)) {
+      disp.textContent = `입력된 RAM: ${val} GB`;
+    } else {
+      disp.textContent = '올바른 숫자를 입력하세요.';
+    }
   });
 </script>
     <!-- =======================================================
@@ -203,6 +375,49 @@
   // 탭 포커스 재진입 시 자동 갱신
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) updateRamDisplay();
+  });
+</script>
+
+<!-- Chrome 힙 메모리 (performance.memory) 표시 (Chrome 전용) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>페이지 힙 메모리 (Chrome 전용)</h3>
+  <p id="heap-display">확인 중…</p>
+</div>
+
+<!-- 사용자가 직접 RAM 입력 (정확한 값) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>정확한 RAM 입력 (GB)</h3>
+  <input id="user-ram" type="number" min="0" step="0.1" placeholder="예: 12" style="width:80px;"/>
+  <button id="apply-ram" class="tool" style="margin-left:4px;">적용</button>
+  <p id="user-ram-display" style="margin-top:4px;">아직 입력되지 않음</p>
+</div>
+
+<script type="module">
+  // 힙 메모리 표시 (Chrome 전용)
+  function updateHeapDisplay() {
+    const el = document.getElementById('heap-display');
+    if (typeof performance !== 'undefined' && performance.memory) {
+      const used = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+      const total = Math.round(performance.memory.totalJSHeapSize / 1024 / 1024);
+      el.textContent = `사용 중: ${used} MB / 총: ${total} MB`;
+    } else {
+      el.textContent = '이 브라우저는 performance.memory를 지원하지 않습니다.';
+    }
+  }
+  // 초기 표시 & 포커스 복귀 시 갱신
+  if (document.readyState !== 'loading') updateHeapDisplay();
+  else document.addEventListener('DOMContentLoaded', updateHeapDisplay);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHeapDisplay(); });
+
+  // 사용자가 입력한 RAM 값 표시
+  document.getElementById('apply-ram').addEventListener('click', () => {
+    const val = document.getElementById('user-ram').value;
+    const disp = document.getElementById('user-ram-display');
+    if (val && !isNaN(val)) {
+      disp.textContent = `입력된 RAM: ${val} GB`;
+    } else {
+      disp.textContent = '올바른 숫자를 입력하세요.';
+    }
   });
 </script>
 
@@ -1024,7 +1239,93 @@
             }
         }
     </script>
+
+<!-- Chrome 힙 메모리 (performance.memory) 표시 (Chrome 전용) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>페이지 힙 메모리 (Chrome 전용)</h3>
+  <p id="heap-display">확인 중…</p>
+</div>
+
+<!-- 사용자가 직접 RAM 입력 (정확한 값) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>정확한 RAM 입력 (GB)</h3>
+  <input id="user-ram" type="number" min="0" step="0.1" placeholder="예: 12" style="width:80px;"/>
+  <button id="apply-ram" class="tool" style="margin-left:4px;">적용</button>
+  <p id="user-ram-display" style="margin-top:4px;">아직 입력되지 않음</p>
+</div>
+
+<script type="module">
+  // 힙 메모리 표시 (Chrome 전용)
+  function updateHeapDisplay() {
+    const el = document.getElementById('heap-display');
+    if (typeof performance !== 'undefined' && performance.memory) {
+      const used = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+      const total = Math.round(performance.memory.totalJSHeapSize / 1024 / 1024);
+      el.textContent = `사용 중: ${used} MB / 총: ${total} MB`;
+    } else {
+      el.textContent = '이 브라우저는 performance.memory를 지원하지 않습니다.';
+    }
+  }
+  // 초기 표시 & 포커스 복귀 시 갱신
+  if (document.readyState !== 'loading') updateHeapDisplay();
+  else document.addEventListener('DOMContentLoaded', updateHeapDisplay);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHeapDisplay(); });
+
+  // 사용자가 입력한 RAM 값 표시
+  document.getElementById('apply-ram').addEventListener('click', () => {
+    const val = document.getElementById('user-ram').value;
+    const disp = document.getElementById('user-ram-display');
+    if (val && !isNaN(val)) {
+      disp.textContent = `입력된 RAM: ${val} GB`;
+    } else {
+      disp.textContent = '올바른 숫자를 입력하세요.';
+    }
+  });
+</script>
     <!-- ES6 모듈 방식으로 메인 자바스크립트 실행 -->
     <script type="module" src="main.js"></script>
+
+<!-- Chrome 힙 메모리 (performance.memory) 표시 (Chrome 전용) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>페이지 힙 메모리 (Chrome 전용)</h3>
+  <p id="heap-display">확인 중…</p>
+</div>
+
+<!-- 사용자가 직접 RAM 입력 (정확한 값) -->
+<div class="info-box" style="margin:12px; padding:12px; border:1px solid #ccc; border-radius:8px; display:inline-block;">
+  <h3>정확한 RAM 입력 (GB)</h3>
+  <input id="user-ram" type="number" min="0" step="0.1" placeholder="예: 12" style="width:80px;"/>
+  <button id="apply-ram" class="tool" style="margin-left:4px;">적용</button>
+  <p id="user-ram-display" style="margin-top:4px;">아직 입력되지 않음</p>
+</div>
+
+<script type="module">
+  // 힙 메모리 표시 (Chrome 전용)
+  function updateHeapDisplay() {
+    const el = document.getElementById('heap-display');
+    if (typeof performance !== 'undefined' && performance.memory) {
+      const used = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+      const total = Math.round(performance.memory.totalJSHeapSize / 1024 / 1024);
+      el.textContent = `사용 중: ${used} MB / 총: ${total} MB`;
+    } else {
+      el.textContent = '이 브라우저는 performance.memory를 지원하지 않습니다.';
+    }
+  }
+  // 초기 표시 & 포커스 복귀 시 갱신
+  if (document.readyState !== 'loading') updateHeapDisplay();
+  else document.addEventListener('DOMContentLoaded', updateHeapDisplay);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHeapDisplay(); });
+
+  // 사용자가 입력한 RAM 값 표시
+  document.getElementById('apply-ram').addEventListener('click', () => {
+    const val = document.getElementById('user-ram').value;
+    const disp = document.getElementById('user-ram-display');
+    if (val && !isNaN(val)) {
+      disp.textContent = `입력된 RAM: ${val} GB`;
+    } else {
+      disp.textContent = '올바른 숫자를 입력하세요.';
+    }
+  });
+</script>
 </body>
 </html>
