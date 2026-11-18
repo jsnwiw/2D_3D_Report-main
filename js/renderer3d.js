@@ -355,36 +355,43 @@ export function render3DVisualization(labels, values) {
     const barStyleSelect = $('bar-style');
     const quickBarStyle = $('quick-bar-style');
 
-    let style = appState.current3DStyle;
-    if (!style || style === 'auto') {
-        style = (quickBarStyle && quickBarStyle.value !== 'auto')
+    let selectedStyle = appState.current3DStyle;
+    if (!selectedStyle || selectedStyle === 'auto') {
+        selectedStyle = (quickBarStyle && quickBarStyle.value !== 'auto')
             ? quickBarStyle.value
-            : (barStyleSelect ? barStyleSelect.value : 'auto');
+            : (barStyleSelect && barStyleSelect.value !== 'auto' ? barStyleSelect.value : 'auto');
     }
 
-    if (style === 'auto' || !style) {
-        style = inferBest3DStyle(labels, values, appState.analysisResult);
+    // 3D 자동 추천 모드일 경우: 데이터 특성을 분석해 최적의 3D 형태를 렌더링하되 UI 선택 상태('auto')는 유지
+    let effectiveStyle = selectedStyle;
+    if (selectedStyle === 'auto' || !selectedStyle) {
+        effectiveStyle = inferBest3DStyle(labels, values, appState.analysisResult) || 'box';
+        appState.activeRendered3DStyle = effectiveStyle;
+        appState.current3DStyle = 'auto';
+    } else {
+        effectiveStyle = selectedStyle;
+        appState.activeRendered3DStyle = selectedStyle;
+        appState.current3DStyle = selectedStyle;
     }
-    appState.current3DStyle = style;
 
-    const isDonut = style === 'donut';
-    const isPie = style === 'pie' || isDonut;
+    const isDonut = effectiveStyle === 'donut';
+    const isPie = effectiveStyle === 'pie' || isDonut;
 
     if (isPie) {
         renderPieOrDonut(labels, values, maxVal, isDonut);
-    } else if (style === 'scatter') {
+    } else if (effectiveStyle === 'scatter') {
         renderScatter(labels, values, maxVal, maxH);
-    } else if (style === 'line') {
+    } else if (effectiveStyle === 'line') {
         renderTubeLine(labels, values, maxVal, maxH);
-    } else if (style === 'area') {
+    } else if (effectiveStyle === 'area') {
         renderAreaSurface(labels, values, maxVal, maxH);
-    } else if (style === 'surface') {
+    } else if (effectiveStyle === 'surface') {
         renderSurfaceGrid(labels, values, maxVal, maxH);
     } else {
-        renderColumns(labels, values, maxVal, minVal, maxH, style);
+        renderColumns(labels, values, maxVal, minVal, maxH, effectiveStyle);
     }
 
-    fitCameraToObjectBounds(count, style);
+    fitCameraToObjectBounds(count, effectiveStyle);
 }
 
 function renderColumns(labels, values, maxVal, minVal, maxH, style) {

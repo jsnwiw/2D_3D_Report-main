@@ -146,8 +146,10 @@ export function processData(sourceName) {
         const numericColumns = appState.analysisResult?.numericCols || [];
         mobileTimelineAction.hidden = numericColumns.length < 2;
     }
+    // 데이터 입력 시 3D 스타일을 '3D 자동 추천(auto)'으로 자동 선택
+    appState.current3DStyle = 'auto';
+    sync3DStyleUI('auto');
     applyVisualization();
-    sync3DStyleUI(appState.current3DStyle || 'box');
 
     // 4. 상태 표시줄 갱신
     const statusIndicator = $('status-indicator');
