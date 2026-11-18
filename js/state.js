@@ -146,27 +146,31 @@ export function getSystemInfo() {
     else if (/ipod/.test(uaOS)) osName = 'iOS (iPod)';
     else if (/linux/.test(uaOS)) osName = 'Linux';
 
-    // 5. 정확한 RAM 메모리 용량 100% 자동 감지
-    let deviceMemoryGB = 16;
-    let deviceMemory = '16GB RAM';
-    let deviceMemoryDisplay = '16 GB';
+    // 5. 정확한 RAM 메모리 용량 자동 감지 및 사용자 설정 반영
+    let deviceMemoryGB = 12;
+    let deviceMemory = '12GB RAM';
+    let deviceMemoryDisplay = '12 GB';
 
-    if (deviceType === 'mobile' || deviceType === 'tablet') {
-        // 스마트폰 및 태블릿 환경: 브라우저 실측 API 및 AP 하드웨어 기반 감지
+    const savedUserRam = getUserRamSelection();
+    if (savedUserRam && savedUserRam !== 'auto') {
+        const parsed = parseInt(savedUserRam, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+            deviceMemoryGB = parsed;
+        }
+    } else if (deviceType === 'mobile' || deviceType === 'tablet') {
+        // 스마트폰 및 태블릿 환경: 브라우저 실측 API 및 플래그십 AP 하드웨어 기반 감지
         if (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory > 0) {
             if (navigator.deviceMemory >= 8) {
-                // 브라우저 최대 8GB+ 보고: 최신 플래그십은 16GB까지 물리 램 지원
-                deviceMemoryGB = cpuCores >= 8 ? 16 : 12;
+                // 브라우저는 보안상 최대 8GB로 제한 보고: 갤럭시 탭 S10+/S9+/Ultra 및 S24 Ultra 플래그십 표준 물리 램은 12GB
+                deviceMemoryGB = 12;
             } else {
                 // 4GB, 6GB 등 중보급형 기기 실제 램 정확히 반영
                 deviceMemoryGB = navigator.deviceMemory;
             }
         } else {
             // navigator.deviceMemory 미지원 환경 (iOS Safari 등)
-            deviceMemoryGB = (deviceType === 'tablet' || cpuCores >= 8) ? 16 : 8;
+            deviceMemoryGB = (deviceType === 'tablet' || cpuCores >= 8) ? 8 : 6;
         }
-        deviceMemory = `${deviceMemoryGB}GB RAM`;
-        deviceMemoryDisplay = `${deviceMemoryGB} GB`;
     } else {
         // 컴퓨터 / 노트북(데스크톱) 환경: CPU 및 하드웨어 사양 기반 자동 감지
         if (cpuCores >= 20 || /rtx\s*(4090|3090)|quadro|titan/i.test(rawGpuRenderer)) {
@@ -177,9 +181,9 @@ export function getSystemInfo() {
             // i5 / i7 / Ryzen 등 4코어 이상 데스크톱·노트북 사양 16GB 자동 감지
             deviceMemoryGB = 16;
         }
-        deviceMemory = `${deviceMemoryGB}GB RAM`;
-        deviceMemoryDisplay = `${deviceMemoryGB} GB`;
     }
+    deviceMemory = `${deviceMemoryGB}GB RAM`;
+    deviceMemoryDisplay = `${deviceMemoryGB} GB`;
 
     const screenRes = `${window.screen.width} × ${window.screen.height} (DPR: ${window.devicePixelRatio || 1})`;
     const colorDepth = `${window.screen.colorDepth || 24}비트 트루컬러`;
