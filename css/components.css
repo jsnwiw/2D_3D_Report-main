@@ -306,7 +306,7 @@ body.dark-mode .toolbar-divider {
     min-width: 0;
     overflow-x: auto; 
     overflow-y: hidden;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     padding: 4px 4px;
     scrollbar-width: thin;
     scrollbar-color: rgba(129, 140, 248, 0.45) transparent;
@@ -923,7 +923,7 @@ body.dark-mode .panel-title {
     min-height: 0;
     overflow-y: auto !important;      /* body overflow:hidden을 무시하고 패널 내부만 스크롤 */
     overflow-x: hidden;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y;

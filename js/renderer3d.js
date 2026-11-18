@@ -125,13 +125,15 @@ export async function initThreeScene() {
     appState.renderer.toneMappingExposure = 1.1;
     container.appendChild(appState.renderer.domElement);
 
-    // OrbitControls
+    // OrbitControls: 휠 줌 스크롤 및 회전 조작 속도 대폭 가속
     appState.controls = new OrbitControls(appState.camera, appState.renderer.domElement);
     appState.controls.enableDamping = true;
-    appState.controls.dampingFactor = 0.08;
+    appState.controls.dampingFactor = 0.12;
+    appState.controls.zoomSpeed = 2.0;    // 휠 줌 스크롤 2배 속도로 가속
+    appState.controls.rotateSpeed = 1.25; // 3D 회전 조작 가속
     appState.controls.maxPolarAngle = Math.PI / 2 - 0.02;
-    appState.controls.minDistance = 3;
-    appState.controls.maxDistance = 120;
+    appState.controls.minDistance = 2;
+    appState.controls.maxDistance = 140;
     appState.controls.target.set(0, 2, 0);
 
     // 조명

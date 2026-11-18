@@ -549,7 +549,7 @@ export function setupTopBarActions() {
             const diff = targetScroll - element.scrollLeft;
 
             if (Math.abs(diff) > 0.5) {
-                element.scrollLeft += diff * 0.2;
+                element.scrollLeft += diff * 0.45;
                 requestAnimationFrame(step);
             } else {
                 element.scrollLeft = targetScroll;
@@ -564,7 +564,7 @@ export function setupTopBarActions() {
                 if (!isAnimating) {
                     targetScroll = element.scrollLeft;
                 }
-                targetScroll += delta * 1.15;
+                targetScroll += delta * 2.2;
                 if (!isAnimating) {
                     isAnimating = true;
                     requestAnimationFrame(step);
