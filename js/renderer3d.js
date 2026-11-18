@@ -96,16 +96,16 @@ export async function initThreeScene() {
                     if (info.description) appState.gpuEngineState.gpuName = info.description;
                     if (info.vendor) appState.gpuEngineState.vendor = info.vendor;
                     if (info.architecture) appState.gpuEngineState.architecture = info.architecture;
-                }
+        
                 appState.gpuEngineState.featuresCount = adapter.features?.size || 0;
                 appState.gpuEngineState.isWebGPU = true;
                 appState.gpuEngineState.backendName = 'WebGPU (Vulkan / Direct3D 12 Low-level)';
                 const badge = $('gpu-engine-text');
                 if (badge) badge.textContent = '⚡ Vulkan / WebGPU';
-            }
-        } catch (e) {
+    
+ catch (e) {
             console.warn('WebGPU 어댑터 정보 조회 실패:', e);
-        }
+
     }
 
     // WebGL fallback으로 실제 GPU 렌더러/벤더 보강 (WebGPU adapter info가 빈 문자열일 때)
@@ -119,12 +119,12 @@ export async function initThreeScene() {
                 const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
                 if (renderer && (!appState.gpuEngineState.gpuName || appState.gpuEngineState.gpuName === '하드웨어 감지 중...')) {
                     appState.gpuEngineState.gpuName = renderer;
-                }
+        
                 if (vendor && (!appState.gpuEngineState.vendor || appState.gpuEngineState.vendor === '감지 중...')) {
                     appState.gpuEngineState.vendor = vendor;
-                }
-            }
-        }
+        
+    
+
     } catch (e) { /* ignore */ }
 
     // 아키텍처 자동 판별
@@ -312,18 +312,18 @@ export function clearScene() {
         if (!obj) return;
         if (obj.geometry) {
             obj.geometry.dispose();
-        }
+
         if (obj.material) {
             if (Array.isArray(obj.material)) {
                 obj.material.forEach(m => {
                     if (m.map) m.map.dispose();
                     m.dispose();
-                });
-            } else {
+        );
+     else {
                 if (obj.material.map) obj.material.map.dispose();
                 obj.material.dispose();
-            }
-        }
+    
+
     };
 
     appState.dataObjects.forEach(obj => {
@@ -452,7 +452,7 @@ function renderColumns(labels, values, maxVal, minVal, maxH, style) {
             color,
             roughness: 0.35,
             metalness: 0.15
-        });
+);
 
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(x, h / 2, z);
@@ -482,11 +482,11 @@ function renderPieOrDonut(labels, values, maxVal, isDonut) {
         if (isDonut) {
             shape.absarc(0, 0, outerR, currentAngle, currentAngle + angle, false);
             shape.absarc(0, 0, innerR, currentAngle + angle, currentAngle, true);
-        } else {
+ else {
             shape.moveTo(0, 0);
             shape.arc(0, 0, outerR, currentAngle, currentAngle + angle, false);
             shape.lineTo(0, 0);
-        }
+
 
         const extrudeSettings = { depth: h, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.08, bevelThickness: 0.08 };
         const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
@@ -723,7 +723,7 @@ export function updateLabels() {
         if (tempVec.z > 1) {
             l.el.style.opacity = '0';
             continue;
-        }
+
         const x = (tempVec.x * 0.5 + 0.5) * w;
         const y = (-tempVec.y * 0.5 + 0.5) * h;
         l.el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -100%)`;
@@ -783,6 +783,72 @@ function performRaycast() {
         return;
     }
 
+    // Update tooltip position if already visible
+    if (tooltip && tooltip.style.display !== 'none') {
+        tooltip.style.left = `${mouseClientX + 14}px`;
+        tooltip.style.top = `${mouseClientY + 14}px`;
+    }
+
+    raycaster.setFromCamera(mouse, appState.camera);
+    const hits = raycaster.intersectObjects(appState.dataObjects, false);
+
+    if (hits.length > 0) {
+        const hit = hits[0].object;
+        // If hover moved to a new object
+        if (hoveredObject !== hit) {
+            // Hide previous halo
+            if (hoveredObject && hoveredObject.userData.hoverHalo) {
+                hoveredObject.userData.hoverHalo.visible = false;
+            }
+            // Reset previous emissive
+            if (hoveredObject && hoveredObject !== selectedObject) {
+                hoveredObject.material.emissive?.setHex(0x000000);
+            }
+            hoveredObject = hit;
+            // Apply hover effect if not the selected object
+            if (hoveredObject !== selectedObject) {
+                hoveredObject.material.emissive?.setHex(0x312e81);
+                if (!hoveredObject.userData.hoverHalo) {
+                    createHoverHalo(hoveredObject);
+                } else {
+                    hoveredObject.userData.hoverHalo.visible = true;
+                }
+            }
+        }
+        // Show tooltip for the hovered object
+        if (tooltip && tooltipName && tooltipValue) {
+            tooltip.style.display = 'block';
+            tooltip.style.left = `${mouseClientX + 14}px`;
+            tooltip.style.top = `${mouseClientY + 14}px`;
+            tooltipName.textContent = hit.userData.name || '데이터';
+            tooltipValue.textContent = typeof hit.userData.value === 'number'
+                ? hit.userData.value.toLocaleString()
+                : hit.userData.value;
+        }
+        container.style.cursor = 'pointer';
+    } else {
+        // No hit – clear hover state
+        if (hoveredObject && hoveredObject !== selectedObject) {
+            if (hoveredObject.userData.hoverHalo) {
+                hoveredObject.userData.hoverHalo.visible = false;
+            }
+            hoveredObject.material.emissive?.setHex(0x000000);
+        }
+        hoveredObject = null;
+        if (tooltip) tooltip.style.display = 'none';
+        container.style.cursor = 'grab';
+    }
+}
+    const container = $('canvas-container');
+    const tooltip = $('hover-tooltip');
+    const tooltipName = $('tooltip-name');
+    const tooltipValue = $('tooltip-value');
+
+    if (!container || !appState.dataObjects.length || !appState.camera) {
+        if (tooltip) tooltip.style.display = 'none';
+        return;
+    }
+
     if (tooltip && tooltip.style.display !== 'none') {
         tooltip.style.left = `${mouseClientX + 14}px`;
         tooltip.style.top = `${mouseClientY + 14}px`;
@@ -797,11 +863,11 @@ function performRaycast() {
             // Hide previous hover halo if any
             if (hoveredObject && hoveredObject.userData.hoverHalo) {
                 hoveredObject.userData.hoverHalo.visible = false;
-            }
+    
             // Reset previous hovered object's emissive
             if (hoveredObject && hoveredObject !== selectedObject) {
                 hoveredObject.material.emissive?.setHex(0x000000);
-            }
+    
             hoveredObject = hit;
             // Show halo for new hovered object
             if (hoveredObject !== selectedObject) {
@@ -809,23 +875,13 @@ function performRaycast() {
                 // Create or show halo
                 if (!hoveredObject.userData.hoverHalo) {
                     createHoverHalo(hoveredObject);
-                } else {
+         else {
                     hoveredObject.userData.hoverHalo.visible = true;
-                }
-            }
-        }
-            if (hoveredObject && hoveredObject !== selectedObject) {
-        // Hide previous hover halo
-        if (hoveredObject.userData.hoverHalo) {
-            hoveredObject.userData.hoverHalo.visible = false;
-        }
-                hoveredObject.material.emissive?.setHex(0x000000);
-            }
-            hoveredObject = hit;
-            if (hoveredObject !== selectedObject) {
-                hoveredObject.material.emissive?.setHex(0x312e81);
-            }
-        }
+        
+    
+
+
+
         if (tooltip && tooltipName && tooltipValue) {
             tooltip.style.display = 'block';
             tooltip.style.left = `${mouseClientX + 14}px`;
@@ -834,16 +890,16 @@ function performRaycast() {
             tooltipValue.textContent = typeof hit.userData.value === 'number'
                 ? hit.userData.value.toLocaleString()
                 : hit.userData.value;
-        }
+
         container.style.cursor = 'pointer';
     } else {
         if (hoveredObject && hoveredObject !== selectedObject) {
         // Hide previous hover halo
         if (hoveredObject.userData.hoverHalo) {
             hoveredObject.userData.hoverHalo.visible = false;
-        }
+
             hoveredObject.material.emissive?.setHex(0x000000);
-        }
+
         hoveredObject = null;
         if (tooltip) tooltip.style.display = 'none';
         container.style.cursor = 'grab';
@@ -872,9 +928,9 @@ function setupRaycasting() {
         // Hide previous hover halo
         if (hoveredObject.userData.hoverHalo) {
             hoveredObject.userData.hoverHalo.visible = false;
-        }
+
             hoveredObject.material.emissive?.setHex(0x000000);
-        }
+
         hoveredObject = null;
         if (tooltip) tooltip.style.display = 'none';
         container.style.cursor = 'grab';
@@ -888,7 +944,7 @@ function setupRaycasting() {
         if (hits.length > 0) {
             const hit = hits[0].object;
             selectObject(hit, hit.userData.idx);
-        }
+
     });
 }
 
@@ -1017,7 +1073,7 @@ export function bindCameraControls() {
             btn.classList.toggle('active', appState.controls.autoRotate);
             btn.style.background = '';
             btn.style.color = '';
-        }
+
     });
     $('btn-toggle-grid')?.addEventListener('click', toggleGrid);
     $('btn-toggle-labels')?.addEventListener('click', toggleLabels);
