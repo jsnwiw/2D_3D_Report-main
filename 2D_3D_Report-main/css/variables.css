@@ -1,0 +1,226 @@
+/**
+ * ==============================================================================
+ * [style.css] 3D 데이터 시각화 웹 플랫폼 - 마스터 스타일시트 (Master Stylesheet)
+ * ==============================================================================
+ * 
+ * [목차 (Table of Contents)]
+ * 1. 기본 초기화 & 전역 타이포그래피 (Reset & Typography)
+ * 2. 3D 뷰포트 & 캔버스 컨테이너 (Three.js Viewport)
+ * 3. 3D → 2D 실시간 플로팅 툴팁 & 월드 라벨 레이어 (Tooltips & Labels)
+ * 4. 상단 글로벌 컨트롤 바 & GPU 상태 뱃지 (Top Control Bar & Badges)
+ * 5. 독립 데이터 소스 파일 업로드 카드 (Upload Panel & Encodings)
+ * 6. 우측 슬라이딩 대시보드 메뉴 드로어 (Sidebar Menu Drawer)
+ * 7. 아코디언 UI & 카드 컴포넌트 (Accordion & Card System)
+ * 8. 필터링, 정렬 & 슬라이더 컨트롤 그룹 (Filters & Sliders)
+ * 9. 좌측 2D 보조 차트 & 양방향 틀고정 데이터 테이블 (2D Chart & Sticky Table)
+ * 10. 하단 시계열 다차원 타임슬라이더 플레이어 (Time Player Bar)
+ * 11. 화면 전체 드래그 앤 드롭 오버레이 (Drag & Drop Overlay)
+ * 12. GPU 엔진 사양 팝업 모달 (Hardware Spec Modal)
+ * 13. 알림 토스트 팝업 (Toast Notifications)
+ * 14. A4 분석 보고서 전용 인쇄 스타일 (@media print & Report View)
+ * 15. 모바일 반응형 미디어 쿼리 (@media max-width: 600px)
+ * ==============================================================================
+ */
+
+/* ==============================================================================
+   1. 기본 초기화 & 전역 타이포그래피 (Reset & Typography)
+   ============================================================================== */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; /* 패딩과 테두리를 요소 너비에 포함 */
+}
+
+:root {
+    --ui-spring: cubic-bezier(0.22, 1.28, 0.36, 1);
+    --ui-smooth: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+    /* 공통 버튼 디자인 시스템 토큰 */
+    --btn-radius: 7px;
+    --btn-height: 32px;
+    --btn-font: 'Inter', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* 3D Glass Editor 라이트 테마 토큰 (기본 Bright Theme) */
+    --theme-bg: #edf1f7;
+    --theme-text: #1e293b;
+    --theme-text-muted: #64748b;
+    --theme-text-heading: #0f172a;
+    --theme-border: rgba(226, 232, 240, 0.9);
+    --theme-border-strong: rgba(203, 213, 225, 0.85);
+
+    --panel-fill: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(243, 247, 255, 0.88));
+    --panel-border: rgba(255, 255, 255, 0.95);
+    --inner-highlight: rgba(255, 255, 255, 0.98);
+    --panel-shadow: inset 0 1px 0 var(--inner-highlight), inset 0 -1px 0 rgba(226, 232, 240, 0.5), 0 16px 32px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.04);
+
+    --control-fill: rgba(255, 255, 255, 0.88);
+    --control-border: rgba(203, 213, 225, 0.85);
+    --control-hover: rgba(255, 255, 255, 0.98);
+    --control-hover-border: rgba(99, 102, 241, 0.6);
+    --control-color: #334155;
+    --control-hover-color: #0f172a;
+
+    --topbar-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.94)), #ffffff;
+    --topbar-border: rgba(226, 232, 240, 0.95);
+    --viewport-gradient: radial-gradient(circle at 52% 66%, rgba(255, 255, 255, 0.95), transparent 45%), linear-gradient(180deg, #f8fafc, #edf1f7);
+
+    --card-surface: rgba(255, 255, 255, 0.75);
+    --card-surface-active: rgba(255, 255, 255, 0.95);
+    --card-header-hover: rgba(241, 245, 249, 0.75);
+    --card-body-bg: rgba(248, 250, 252, 0.55);
+
+    --input-bg: rgba(255, 255, 255, 0.95);
+    --input-border: rgba(203, 213, 225, 0.9);
+    --input-color: #1e293b;
+
+    --table-header-bg: #f1f5f9;
+    --table-header-color: #1e293b;
+    --table-row-bg: #ffffff;
+    --table-row-alt: #f8fafc;
+    --table-row-color: #334155;
+    --table-border: rgba(226, 232, 240, 0.85);
+}
+
+/* 3D Glass Editor 다크 테마 토큰 (Dark Theme) */
+body.dark-mode {
+    --theme-bg: #090e17;
+    --theme-text: #e2e8f0;
+    --theme-text-muted: #94a3b8;
+    --theme-text-heading: #f8fafc;
+    --theme-border: rgba(148, 163, 184, 0.2);
+    --theme-border-strong: rgba(99, 102, 241, 0.35);
+
+    --panel-fill: linear-gradient(145deg, rgba(22, 35, 63, 0.92), rgba(12, 22, 43, 0.88));
+    --panel-border: rgba(154, 178, 255, 0.28);
+    --inner-highlight: rgba(255, 255, 255, 0.14);
+    --panel-shadow: inset 0 1px 0 var(--inner-highlight), inset 0 -1px 0 rgba(15, 23, 42, 0.8), 0 16px 36px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.3);
+
+    --control-fill: rgba(24, 38, 68, 0.75);
+    --control-border: rgba(122, 149, 238, 0.25);
+    --control-hover: rgba(39, 59, 101, 0.92);
+    --control-hover-border: rgba(119, 158, 255, 0.65);
+    --control-color: #cbd5e1;
+    --control-hover-color: #ffffff;
+
+    --topbar-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(12, 18, 34, 0.94)), #0f172a;
+    --topbar-border: rgba(99, 102, 241, 0.28);
+    --viewport-gradient: radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.4), transparent 60%), linear-gradient(180deg, #0f172a, #090e17);
+
+    --card-surface: rgba(20, 30, 50, 0.7);
+    --card-surface-active: rgba(26, 40, 68, 0.9);
+    --card-header-hover: rgba(30, 41, 59, 0.75);
+    --card-body-bg: rgba(15, 23, 42, 0.65);
+
+    --input-bg: rgba(15, 23, 42, 0.85);
+    --input-border: rgba(99, 102, 241, 0.35);
+    --input-color: #f1f5f9;
+
+    --table-header-bg: #1e293b;
+    --table-header-color: #f8fafc;
+    --table-row-bg: #0f172a;
+    --table-row-alt: #162032;
+    --table-row-color: #cbd5e1;
+    --table-border: rgba(51, 65, 85, 0.7);
+
+    background: var(--theme-bg);
+    color: var(--theme-text);
+}
+
+body, html {
+    width: 100%; 
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden !important; /* 웹사이트 전체 스크롤 완전 비활성화 (3D 뷰포트 고정) */
+    position: fixed;             /* 모바일/태블릿 바운스 스크롤 방지 */
+    top: 0;
+    left: 0;
+    font-family: var(--btn-font);
+    background: var(--theme-bg);
+    color: var(--theme-text);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 3D Glass Editor 앰비언트 오로라 글로우 & 투시 바닥 그리드 */
+.ambient {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 2;
+}
+.ambient-one {
+    top: 8%;
+    left: 26%;
+    width: 340px;
+    height: 200px;
+    background: rgba(99, 102, 241, 0.18);
+}
+.ambient-two {
+    right: 8%;
+    bottom: 10%;
+    width: 320px;
+    height: 260px;
+    background: rgba(236, 72, 153, 0.14);
+}
+.ground-grid {
+    position: absolute;
+    left: -22%;
+    bottom: -26%;
+    width: 145%;
+    height: 86%;
+    opacity: 0.25;
+    background-image:
+        linear-gradient(rgba(100, 116, 139, 0.14) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(100, 116, 139, 0.14) 1px, transparent 1px);
+    background-size: 62px 38px;
+    transform: perspective(430px) rotateX(61deg);
+    transform-origin: center bottom;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 33%, black 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 33%, black 100%);
+    pointer-events: none;
+    z-index: 2;
+}
+body.dark-mode .ambient-one {
+    background: rgba(99, 102, 241, 0.28);
+    opacity: 0.45;
+}
+body.dark-mode .ambient-two {
+    background: rgba(236, 72, 153, 0.22);
+    opacity: 0.4;
+}
+body.dark-mode .ground-grid {
+    opacity: 0.35;
+    background-image:
+        linear-gradient(rgba(148, 163, 255, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 255, 0.2) 1px, transparent 1px);
+}
+
+/* 3D Glass Editor 표준 글래스 패널 (모든 플로팅 창 공통 베이스) */
+.glass-panel {
+    border: 1px solid var(--panel-border) !important;
+    border-radius: 15px;
+    background: var(--panel-fill) !important;
+    box-shadow: var(--panel-shadow) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(135%) !important;
+    backdrop-filter: blur(24px) saturate(135%) !important;
+    position: relative;
+    color: var(--theme-text);
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-panel::after {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.45),
+        transparent 35%,
+        transparent 65%,
+        rgba(199, 210, 254, 0.18)
+    );
+    content: "";
+    pointer-events: none;
+}

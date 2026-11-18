@@ -1,0 +1,238 @@
+/* ===============================
+    Mobile responsive adjustments
+    =============================== */
+#mobile-action-bar {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    #top-bar {
+        top: 0;
+        height: calc(52px + env(safe-area-inset-top, 0px));
+        flex-direction: row;
+        align-items: center;
+        padding: env(safe-area-inset-top, 0px) 10px 0;
+    }
+    .top-bar-left {
+        width: auto;
+        min-width: 0;
+        flex: 0 0 auto;
+        justify-content: flex-start;
+        gap: 6px;
+    }
+    .top-bar-left h1 {
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    .gpu-badge {
+        padding: 3px 6px;
+        gap: 4px;
+        font-size: 10px;
+    }
+    .top-bar-right {
+        display: flex;
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        justify-content: flex-start;
+        gap: 4px;
+        padding: 2px 0;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+    .top-bar-right button {
+        padding: 4px 7px;
+        font-size: 10px;
+    }
+    .top-bar-fixed-right {
+        margin-left: 4px;
+        flex-shrink: 0;
+    }
+    .top-bar-fixed-right button {
+        padding: 4px 9px;
+        font-size: 11px;
+    }
+    .topbar-style-wrap {
+        padding: 2px 5px;
+    }
+    .topbar-style-select {
+        font-size: 10px;
+    }
+    #mobile-action-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 60;
+        display: flex;
+        justify-content: space-around;
+        gap: 4px;
+        padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+        background: var(--topbar-bg);
+        border-top: 1px solid var(--theme-border);
+        backdrop-filter: blur(14px);
+    }
+    .mobile-action {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        border: 1px solid var(--control-border);
+        border-radius: var(--btn-radius);
+        background: var(--control-fill);
+        color: var(--control-color);
+        font: inherit;
+        font-size: 10px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: transform 0.24s var(--ui-spring), background 0.2s ease, box-shadow 0.24s var(--ui-smooth);
+    }
+    .mobile-action:active {
+        background: var(--control-hover);
+        color: var(--control-hover-color);
+        transform: scale(0.96);
+    }
+    .mobile-action[hidden] {
+        display: none;
+    }
+    .mobile-action-icon {
+        font-size: clamp(16px, 4vw, 22px);
+        line-height: 1;
+    }
+    .usage-guide-backdrop {
+        padding: 8px;
+    }
+    .usage-guide-card {
+        width: 100%;
+        max-height: calc(100dvh - 16px);
+        border-radius: 12px;
+    }
+    .usage-guide-card .modal-header {
+        padding: 12px 14px;
+    }
+    .usage-guide-card .modal-title h3 {
+        font-size: 14px;
+    }
+    .usage-guide-subtitle {
+        font-size: 11px;
+    }
+    .usage-guide-body {
+        padding: 14px 14px 8px;
+    }
+    .usage-guide-steps {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .usage-guide-steps li {
+        gap: 9px;
+        padding: 11px;
+    }
+    .usage-guide-steps p {
+        font-size: 11px;
+    }
+    .usage-guide-actions {
+        padding: 10px 14px;
+    }
+    .usage-guide-primary,
+    .usage-guide-secondary {
+        flex: 1;
+    }
+    .upload-card {
+        top: calc(58px + env(safe-area-inset-top, 0px));
+        left: 8px;
+        right: 8px;
+        width: auto;
+        max-width: none;
+        max-height: calc(100dvh - 138px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        overflow-x: hidden;
+        overflow-y: auto !important; /* body overflow:hidden 무시, 차트패널 내부 스크롤 허용 */
+    }
+    .upload-btn-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .menu-drawer {
+        width: 100vw;
+        max-width: none;
+        left: 0;
+        right: 0;
+        top: env(safe-area-inset-top, 0px);
+        bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+        height: auto;
+        max-height: none;
+        border-radius: 0;
+    }
+    .menu-header {
+        padding: 8px 12px;
+    }
+    .menu-content {
+        padding: 8px 12px;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    .control-group label, .control-group input, .control-group select {
+        width: 100%;
+        margin-bottom: 4px;
+    }
+    .control-group input[type="range"], .control-group input[type="color"] {
+        padding: 0;
+    }
+    .control-group input[type="range"] {
+        max-width: 100%;
+    }
+    .tooltip-3d {
+        font-size: 12px;
+    }
+    #chart-panel {
+        bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+        width: calc(100vw - 16px);
+        max-width: none;
+        max-height: 38dvh;
+        left: 8px;
+    }
+    #chart-panel.maximized {
+        width: calc(100vw - 16px);
+        max-height: calc(100dvh - 150px - env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    button:not(:disabled),
+    .upload-btn {
+        transition-timing-function: var(--ui-spring);
+        transition-duration: 0.24s;
+    }
+
+    .upload-btn:active {
+        transform: scale(0.97);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ==============================================================================
+   시스템 정보 패널 (System Info Header)
+   ============================================================================== */
+#system-info {
+    display: none !important;
+}

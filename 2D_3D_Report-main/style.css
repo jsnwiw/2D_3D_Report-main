@@ -1,0 +1,12 @@
+/**
+ * ==============================================================================
+ * [style.css] 3D 데이터 시각화 웹 플랫폼 - 마스터 번들 스타일시트 (Modular Entry)
+ * ==============================================================================
+ * 각 도메인별 모듈형 CSS 파일들을 @import로 로드합니다.
+ */
+
+@import url('./css/variables.css');
+@import url('./css/components.css');
+@import url('./css/modals.css');
+@import url('./css/report.css');
+@import url('./css/responsive.css');
