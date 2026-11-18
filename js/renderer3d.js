@@ -79,7 +79,7 @@ export async function initThreeScene() {
 
     appState.renderer = new WebGPURenderer({ 
         antialias: true, 
-        alpha: false, 
+        alpha: false,
         forceWebGL: false,
         powerPreference: 'high-performance'
     });
@@ -96,16 +96,16 @@ export async function initThreeScene() {
                     if (info.description) appState.gpuEngineState.gpuName = info.description;
                     if (info.vendor) appState.gpuEngineState.vendor = info.vendor;
                     if (info.architecture) appState.gpuEngineState.architecture = info.architecture;
-        
+                }
                 appState.gpuEngineState.featuresCount = adapter.features?.size || 0;
                 appState.gpuEngineState.isWebGPU = true;
                 appState.gpuEngineState.backendName = 'WebGPU (Vulkan / Direct3D 12 Low-level)';
                 const badge = $('gpu-engine-text');
                 if (badge) badge.textContent = '⚡ Vulkan / WebGPU';
-    
- catch (e) {
+            }
+        } catch (e) {
             console.warn('WebGPU 어댑터 정보 조회 실패:', e);
-
+        }
     }
 
     // WebGL fallback으로 실제 GPU 렌더러/벤더 보강 (WebGPU adapter info가 빈 문자열일 때)
@@ -119,12 +119,12 @@ export async function initThreeScene() {
                 const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
                 if (renderer && (!appState.gpuEngineState.gpuName || appState.gpuEngineState.gpuName === '하드웨어 감지 중...')) {
                     appState.gpuEngineState.gpuName = renderer;
-        
+                }
                 if (vendor && (!appState.gpuEngineState.vendor || appState.gpuEngineState.vendor === '감지 중...')) {
                     appState.gpuEngineState.vendor = vendor;
-        
-    
-
+                }
+            }
+        }
     } catch (e) { /* ignore */ }
 
     // 아키텍처 자동 판별
@@ -183,7 +183,7 @@ export async function initThreeScene() {
      * [색상 설정]: 0xffffff (순수 흰색 / Pure White)
      * [기본 강도]: 0.8
      * [감쇠 거리]: 60
-     * 
+     *
      * [사용 이유 (Why it is used)]:
      * 1. 데이터 원본 색상 보존: 유색 조명(보라/푸른색 계열 등)을 사용할 경우 데이터
      *    메쉬(차트 막대, 파이 등)의 본래 색상이 왜곡되어 분석에 방해가 될 수 있습니다.
@@ -195,7 +195,7 @@ export async function initThreeScene() {
      *    입체적으로 살려줍니다.
      * 3. 중심부 가독성 향상: 원점 상단 [0, 10, 0]에서 구형으로 빛을 비추어 3D 시각화
      *    차트의 핵심 영역에 시각적 집중도를 부여합니다.
-     * 
+     *
      * [사용 방법 (How to use)]:
      * 1. 객체 생성: new THREE.PointLight(color, intensity, distance, decay)
      *    - color: 조명 색상 (기본값: 0xffffff 흰색)
@@ -312,18 +312,18 @@ export function clearScene() {
         if (!obj) return;
         if (obj.geometry) {
             obj.geometry.dispose();
-
+        }
         if (obj.material) {
             if (Array.isArray(obj.material)) {
                 obj.material.forEach(m => {
                     if (m.map) m.map.dispose();
                     m.dispose();
-        );
-     else {
+                });
+            } else {
                 if (obj.material.map) obj.material.map.dispose();
                 obj.material.dispose();
-    
-
+            }
+        }
     };
 
     appState.dataObjects.forEach(obj => {
@@ -452,7 +452,7 @@ function renderColumns(labels, values, maxVal, minVal, maxH, style) {
             color,
             roughness: 0.35,
             metalness: 0.15
-);
+        });
 
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(x, h / 2, z);
@@ -482,11 +482,11 @@ function renderPieOrDonut(labels, values, maxVal, isDonut) {
         if (isDonut) {
             shape.absarc(0, 0, outerR, currentAngle, currentAngle + angle, false);
             shape.absarc(0, 0, innerR, currentAngle + angle, currentAngle, true);
- else {
+        } else {
             shape.moveTo(0, 0);
             shape.arc(0, 0, outerR, currentAngle, currentAngle + angle, false);
             shape.lineTo(0, 0);
-
+        }
 
         const extrudeSettings = { depth: h, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.08, bevelThickness: 0.08 };
         const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
@@ -723,6 +723,7 @@ export function updateLabels() {
         if (tempVec.z > 1) {
             l.el.style.opacity = '0';
             continue;
+        }
 
         const x = (tempVec.x * 0.5 + 0.5) * w;
         const y = (-tempVec.y * 0.5 + 0.5) * h;
@@ -800,12 +801,12 @@ function performRaycast() {
             if (hoveredObject && hoveredObject.userData.hoverHalo) {
                 hoveredObject.userData.hoverHalo.visible = false;
             }
-            // Reset previous emissive
+            // Reset previous hovered object's emissive
             if (hoveredObject && hoveredObject !== selectedObject) {
                 hoveredObject.material.emissive?.setHex(0x000000);
             }
             hoveredObject = hit;
-            // Apply hover effect if not the selected object
+            // Show halo for new hovered object
             if (hoveredObject !== selectedObject) {
                 hoveredObject.material.emissive?.setHex(0x312e81);
                 if (!hoveredObject.userData.hoverHalo) {
@@ -818,8 +819,6 @@ function performRaycast() {
         // Show tooltip for the hovered object
         if (tooltip && tooltipName && tooltipValue) {
             tooltip.style.display = 'block';
-            tooltip.style.left = `${mouseClientX + 14}px`;
-            tooltip.style.top = `${mouseClientY + 14}px`;
             tooltipName.textContent = hit.userData.name || '데이터';
             tooltipValue.textContent = typeof hit.userData.value === 'number'
                 ? hit.userData.value.toLocaleString()
@@ -839,79 +838,12 @@ function performRaycast() {
         container.style.cursor = 'grab';
     }
 }
+
+function setupRaycasting() {
     const container = $('canvas-container');
     const tooltip = $('hover-tooltip');
     const tooltipName = $('tooltip-name');
     const tooltipValue = $('tooltip-value');
-
-    if (!container || !appState.dataObjects.length || !appState.camera) {
-        if (tooltip) tooltip.style.display = 'none';
-        return;
-    }
-
-    if (tooltip && tooltip.style.display !== 'none') {
-        tooltip.style.left = `${mouseClientX + 14}px`;
-        tooltip.style.top = `${mouseClientY + 14}px`;
-    }
-
-    raycaster.setFromCamera(mouse, appState.camera);
-    const hits = raycaster.intersectObjects(appState.dataObjects, false);
-
-    if (hits.length > 0) {
-        const hit = hits[0].object;
-        if (hoveredObject !== hit) {
-            // Hide previous hover halo if any
-            if (hoveredObject && hoveredObject.userData.hoverHalo) {
-                hoveredObject.userData.hoverHalo.visible = false;
-    
-            // Reset previous hovered object's emissive
-            if (hoveredObject && hoveredObject !== selectedObject) {
-                hoveredObject.material.emissive?.setHex(0x000000);
-    
-            hoveredObject = hit;
-            // Show halo for new hovered object
-            if (hoveredObject !== selectedObject) {
-                hoveredObject.material.emissive?.setHex(0x312e81);
-                // Create or show halo
-                if (!hoveredObject.userData.hoverHalo) {
-                    createHoverHalo(hoveredObject);
-         else {
-                    hoveredObject.userData.hoverHalo.visible = true;
-        
-    
-
-
-
-        if (tooltip && tooltipName && tooltipValue) {
-            tooltip.style.display = 'block';
-            tooltip.style.left = `${mouseClientX + 14}px`;
-            tooltip.style.top = `${mouseClientY + 14}px`;
-            tooltipName.textContent = hit.userData.name || '데이터';
-            tooltipValue.textContent = typeof hit.userData.value === 'number'
-                ? hit.userData.value.toLocaleString()
-                : hit.userData.value;
-
-        container.style.cursor = 'pointer';
-    } else {
-        if (hoveredObject && hoveredObject !== selectedObject) {
-        // Hide previous hover halo
-        if (hoveredObject.userData.hoverHalo) {
-            hoveredObject.userData.hoverHalo.visible = false;
-
-            hoveredObject.material.emissive?.setHex(0x000000);
-
-        hoveredObject = null;
-        if (tooltip) tooltip.style.display = 'none';
-        container.style.cursor = 'grab';
-    }
-}
-
-/**
- * 레이캐스팅 광선 추적 (Hover 발광 & Click 카메라 포커싱)
- */
-function setupRaycasting() {
-    const container = $('canvas-container');
-    const tooltip = $('hover-tooltip');
 
     if (!container) return;
 
@@ -925,12 +857,11 @@ function setupRaycasting() {
 
     container.addEventListener('mouseleave', () => {
         if (hoveredObject && hoveredObject !== selectedObject) {
-        // Hide previous hover halo
-        if (hoveredObject.userData.hoverHalo) {
-            hoveredObject.userData.hoverHalo.visible = false;
-
+            if (hoveredObject.userData.hoverHalo) {
+                hoveredObject.userData.hoverHalo.visible = false;
+            }
             hoveredObject.material.emissive?.setHex(0x000000);
-
+        }
         hoveredObject = null;
         if (tooltip) tooltip.style.display = 'none';
         container.style.cursor = 'grab';
@@ -944,7 +875,7 @@ function setupRaycasting() {
         if (hits.length > 0) {
             const hit = hits[0].object;
             selectObject(hit, hit.userData.idx);
-
+        }
     });
 }
 
@@ -993,7 +924,7 @@ function updateCameraAnim() {
 }
 
 /**
- * 렌더 루프 및 실시간 FPS 성능 측정 엔진
+ * 프레임 동기화 및 렌더 루프
  */
 function animateLoop() {
     requestAnimationFrame(animateLoop);
@@ -1073,7 +1004,7 @@ export function bindCameraControls() {
             btn.classList.toggle('active', appState.controls.autoRotate);
             btn.style.background = '';
             btn.style.color = '';
-
+        }
     });
     $('btn-toggle-grid')?.addEventListener('click', toggleGrid);
     $('btn-toggle-labels')?.addEventListener('click', toggleLabels);
