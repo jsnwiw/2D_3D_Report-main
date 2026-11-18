@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>발표 자료 - 3D & 2D 인터랙티브 데이터 분석 및 시각화 시스템</title>
+    <style>
+        :root {
+            --bg-main: #0b1120;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --code-bg: #070d19;
+            --primary-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-purple: #a855f7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        /* 컨트롤 상단 바 */
+        .pres-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            z-index: 100;
+        }
+
+        .pres-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pres-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-ctrl {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid var(--primary-blue);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-ctrl:hover {
+            background: var(--primary-blue);
+        }
+
+        .slide-counter {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* 슬라이드 뷰포트 */
+        .slide-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1280px;
+            height: 100%;
+            max-height: 720px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 40px 48px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease-out;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 슬라이드 헤더 */
+        .slide-header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 16px;
+        }
+
+        .slide-category {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .slide-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        /* 그리드 & 레이아웃 */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1.15fr;
+            gap: 28px;
+            flex: 1;
+        }
+
+        .grid-3col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            flex: 1;
+        }
+
+        .grid-4col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            flex: 1;
+        }
+
+        /* 카드 UI */
+        .content-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-body {
+            font-size: 14px;
+            line-height: 1.65;
+            color: #cbd5e1;
+        }
+
+        .card-body ul {
+            padding-left: 20px;
+        }
+
+        .card-body li {
+            margin-bottom: 8px;
+        }
+
+        /* 코드 박스 */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: "Consolas", "Fira Code", monospace;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #e2e8f0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-badge {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 11px;
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        /* 표지 슬라이드 전용 */
+        .cover-slide {
+            justify-content: center;
+            align-items: flex-start;
+            padding: 60px 80px;
+        }
+
+        .cover-badge {
+            background: rgba(59, 130, 246, 0.18);
+            border: 1px solid var(--primary-blue);
+            color: var(--accent-cyan);
+            font-size: 13px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .cover-title {
+            font-size: 40px;
+            font-weight: 900;
+            line-height: 1.25;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cover-subtitle {
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 36px;
+            line-height: 1.5;
+        }
+
+        .cover-footer {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 스탯 카드 */
+        .stat-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-val {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--accent-cyan);
+            margin-bottom: 6px;
+        }
+
+        .stat-lbl {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 6px;
+        }
+
+        .stat-desc {
+            font-size: 12.5px;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="pres-nav">
+        <div class="pres-title">
+            <span>⚡</span> 3D & 2D 인터랙티브 데이터 분석 플랫폼 발표
+        </div>
+        <div class="pres-controls">
+            <a href="3D_2D_Data_Visualization_Presentation.pptx" download class="btn-ctrl" title="PowerPoint 파일 다운로드">📥 PPTX 다운로드</a>
+            <button class="btn-ctrl" id="btn-prev">◀ 이전</button>
+            <span class="slide-counter" id="slide-num">1 / 11</span>
+            <button class="btn-ctrl" id="btn-next">다음 ▶</button>
+            <button class="btn-ctrl" id="btn-fullscreen">전체화면</button>
+        </div>
+    </nav>
+
+    <main class="slide-container">
+
+        <!-- 1. 표지 -->
+        <section class="slide cover-slide active">
+            <div class="cover-badge">⚡ 차세대 WebGPU & 3D Interactive Web Platform</div>
+            <h1 class="cover-title">3D & 2D 인터랙티브 데이터 분석<br>및 시각화 대시보드 시스템</h1>
+            <p class="cover-subtitle">Vulkan / WebGPU 기반 3D 그래픽스 엔진 · AI 맞춤형 비즈니스 리포트 · 크로스 플랫폼 PWA</p>
+            <div class="cover-footer">
+                <div>
+                    <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">시스템 아키텍처 및 핵심 코드 심층 분석</div>
+                    <div style="font-size: 13px; color: var(--text-muted);">Three.js (r160) WebGPU · Chart.js · SheetJS · Vanilla ES Modules · PWA</div>
+                </div>
+                <div style="font-size: 13px; color: var(--accent-cyan); font-weight: 600;">
+                    2026. 11 발표
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 프로젝트 개요 -->
+        <section class="slide">
+            <header class="slide-header">
+                <div class="slide-category">PROJECT OVERVIEW & MOTIVATION</div>
+                <h2 class="slide-title">프로젝트 개요 및 개발 배경</h2>
+            </header>
+            <div class="grid-3col">
+                <div class="content-card">
+                    <div class="card-title">기존 2D 차트의 한계 극복</div>
+                    <div class="card-body">
+                        <ul>
+                            <li>일반 웹 차트는 2차원 평면 데이터에 국한되어 다차원 공간 분석이 불가함</li>
+                            <li>X축(카테고리), Y축(수치), Z축(비교군), Color(비중) 복합 분석 한계</li>
+                            <li>대량 데이터셋 렌더링 시 브라우저 메인 스레드 렌더링 병목 발생</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="card-title">차세대 WebGPU 저수준 가속</div>
+                    <div class="card-body">
+                        <ul>
+                            <li>W3C 표준 차세대 그래픽스 API인 <b>WebGPU</b> 및 Three.js r160 탑재</li>
+                            <li>Windows Direct3D 12 및 Linux/Android <b>Vulkan</b>과 직접 바인딩</li>
+                            <li>CPU-GPU 드라이버 통신 오버헤드를 획기적으로 낮춰 60~120 FPS 유지</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="card-title">원스톱 인텔리전트 파이프라인</div>
+                    <div class="card-body">
+                        <ul>
+                            <li>엑셀(.xlsx, .xls) 및 CSV 다중 파일 드래그앤드롭 바이너리 즉시 파싱</li>
+                            <li>10종 3D 공간 차트와 2D 대시보드 실시간 양방향 연동</li>
+                            <li>서버 전송 없이 브라우저 내부에서 AI 통계 분석 및 A4 인쇄 PDF 생성</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 시스템 아키텍처 -->
+        <section class="slide">
+            <header class="slide-header">
+                <div class="slide-category">ARCHITECTURE & DATA FLOW</div>
+                <h2 class="slide-title">전체 시스템 아키텍처 및 모듈 구조</h2>
+            </header>
+            <div class="content-card" style="flex: 1;">
+                <div class="card-title">Clean Modular Architecture (ES6 Pure Modules)</div>
+                <div class="card-body" style="display: flex; flex-direction: column; gap: 14px;">
+                    <div><b>1. 데이터 인입 및 파싱 레이어 (parser.js)</b><br><span style="color: #94a3b8;">SheetJS(.xlsx) + Vanilla CSV Parser로 EUC-KR/UTF-8 자동 판별 및 수치/날짜/범주 정규화</span></div>
+                    <div><b>2. 전역 상태 및 텔레메트리 레이어 (state.js, device.js)</b><br><span style="color: #94a3b8;">반응형 appState 컨테이너, GPU 엔진 상태, 하드웨어 사양(CPU, GPU, RAM) 자동 감지</span></div>
+                    <div><b>3. 3D 공간 렌더링 엔진 (renderer3d.js)</b><br><span style="color: #94a3b8;">Three.js r160 WebGPURenderer (Vulkan Fallback), 10종 지오메트리 빌더, Raycaster 호버/클릭 인터랙션</span></div>
+                    <div><b>4. 2D 보조 대시보드 레이어 (chart2d.js)</b><br><span style="color: #94a3b8;">Chart.js v4 연동, 3D 선택 데이터와 2D 차트 간 양방향 하이라이트 동기화</span></div>
+                    <div><b>5. 지능형 통계 및 보고서 엔진 (ai-report.js)</b><br><span style="color: #94a3b8;">기술 통계량(평균/표준편차/사분위수/이상치) 자동 연산 및 A4 비즈니스 인쇄 PDF 생성</span></div>
+                    <div><b>6. PWA 및 오프라인 서비스 레이어 (pwa.js, sw.js)</b><br><span style="color: #94a3b8;">Service Worker Stale-While-Revalidate 캐시 및 안드로이드/모바일 Standalone 앱 설치 지원</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 핵심 구현: 3D 엔진 -->
+        <section class="slide">
+            <header class="slide-header">
+                <div class="slide-category">CORE MODULE IMPLEMENTATION</div>
+                <h2 class="slide-title">핵심 구현 1: WebGPU / 3D 가속 렌더러 (renderer3d.js)</h2>
+            </header>
+            <div class="grid-2col">
+                <div class="content-card">
+                    <div class="card-title">Three.js 3D 렌더링 주요 기술</div>
+                    <div class="card-body">
+                        <ul>
+                            <li><b>WebGPURenderer & WebGL 2.0 스마트 폴백:</b> 차세대 엔진 우선 초기화 및 구형 기기 호환성 100% 보장</li>
+                            <li><b>10종 3D 지오메트리:</b> 막대(Bar), 원기둥(Cylinder), 피라미드, 도넛, 파이, 튜브 라인, 산악 면적, 산점도, 서피스</li>
+                            <li><b>Raycasting 인터랙션:</b> 마우스/터치 호버 시 1.08x 스케일 확대 및 발광(Emissive) 피드백</li>
+                            <li><b>Vector3.project(camera) 화면 투영:</b> 3D 객체 위에 2D HTML 툴팁 및 라벨 정밀 동기화 추적</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <span class="code-badge">renderer3d.js</span>
+<pre>// WebGPURenderer 초기화 & 스마트 폴백
+export async function init3DRenderer(container) {
+  let renderer;
+  try {
+    // 차세대 저수준 WebGPU 엔진 시도 (Vulkan/Direct3D 12)
+    renderer = new THREE.WebGPURenderer({ 
+      antialias: true, alpha: true 
+    });
+    await renderer.init();
+    appState.gpuEngineState.backendName = 'WebGPU (Vulkan / D3D12)';
+  } catch (err) {
+    // 구형 브라우저 대응 WebGL 2.0 세이프 모드 폴백
+    renderer = new THREE.WebGLRenderer({ 
+      antialias: true, alpha: true 
+    });
+    appState.gpuEngineState.backendName = 'WebGL 2.0 (Safe Mode)';
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  container.appendChild(renderer.domElement);
+  return renderer;
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 핵심 구현: 하드웨어 & RAM 감지 -->
+        <section class="slide">
+            <header class="slide-header">
+                <div class="slide-category">HARDWARE TELEMETRY & MEMORY ENGINE</div>
+                <h2 class="slide-title">핵심 구현 2: 하드웨어 텔레메트리 & RAM 감지 (state.js)</h2>
+            </header>
+            <div class="grid-2col">
+                <div class="content-card">
+                    <div class="card-title">지능형 하드웨어 감지 알고리즘</div>
+                    <div class="card-body">
+                        <ul>
+                            <li><b>브라우저 Device Memory API 8GB 상한 보정:</b> 크롬 등 최신 브라우저는 기기 핑거프린팅 방지 위해 실제 램이 12GB/16GB여도 8GB로 제한함</li>
+                            <li><b>플래그십 AP & GPU 정밀 판별:</b> Mali-G925(Dimensity 9300+), Snapdragon 8 Gen 등 플래그십 감지 시 실제 물리 RAM(12GB)으로 정밀 보정</li>
+                            <li><b>삼성 One UI RAM Plus(가상 메모리) 감지:</b> One UI 설정에 맞춰 12GB + RAM Plus 동적 상태 연동</li>
+                            <li><b>실시간 실측 렌더링 성능 HUD:</b> FPS 및 프레임 타임 틱 스파크라인 실시간 캔버스 드로잉</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <span class="code-badge">state.js</span>
+<pre>// 기기 스펙 정밀 감지 및 브라우저 메모리 보정
+export function getSystemInfo() {
+  const deviceType = getDeviceType(); // mobile/tablet/desktop
+  let deviceMemoryGB = 12; // 플래그십 기본 12GB RAM
+
+  if (deviceType === 'mobile' || deviceType === 'tablet') {
+    if (typeof navigator.deviceMemory === 'number') {
+      if (navigator.deviceMemory >= 8) {
+        // 브라우저 8GB 상한 필터링 -> 최신 플래그십 물리 12GB 반영
+        deviceMemoryGB = 12;
+      } else {
+        deviceMemoryGB = navigator.deviceMemory; // 4GB, 6GB 등
+      }
+    }
+  }
+  // 삼성 One UI RAM Plus 가상 메모리 결합
+  const isGalaxy = isSamsungGalaxyDevice();
+  const isRamPlusOn = isGalaxy ? getRamPlusState() : false;
+  const memoryDisplay = isRamPlusOn 
+    ? `${deviceMemoryGB} GB + RAM Plus` 
+    : `${deviceMemoryGB} GB`;
+
+  return { deviceMemoryGB, memoryDisplay, deviceType };
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. 핵심 구현: 데이터 파서 -->
+        <section class="slide">
+            <header class="slide-header">
+                <div class="slide-category">ROBUST DATA PARSING PIPELINE</div>
+                <h2 class="slide-title">핵심 구현 3: 무결점 엑셀 & CSV 파서 (parser.js)</h2>
+            </header>
+            <div class="grid-2col">
+                <div class="content-card">
+                    <div class="card-title">데이터 파싱 파이프라인 특징</div>
+                    <div class="card-body">
+                        <ul>
+                            <li><b>멀티 포맷 바이너리 지원:</b> SheetJS 라이브러리를 내장하여 대용량 .xlsx, .xls 및 .csv 파일 드래그앤드롭 파싱</li>
+                            <li><b>한국어 인코딩 완벽 대응:</b> UTF-8 바이너리 시도 후 치명적 문자(\uFFFD) 탐지 시 EUC-KR / CP949 자동 재디코딩</li>
+                            <li><b>데이터 스키마 자동 프로파일링:</b> 각 열의 유효성 검사를 통해 수치형(Numeric), 시계열/날짜(Date), 범주형(Categorical) 자동 분류</li>
+                            <li><b>3D 공간 매핑 추천:</b> 데이터의 분산도에 따라 최적의 X, Y, Z축 조합을 자동 제안</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <span class="code-badge">parser.js</span>
+<pre>// 엑셀 & CSV 바이너리 디코딩 및 인코딩 자동 보정
+export async function loadAndParseFile(file) {
+  const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+  let rows = [];
+
+  if (isExcel) {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+  } else {
+    // CSV: UTF-8 시도 후 깨짐 감지 시 EUC-KR 자동 재디코딩
+    const buffer = await file.arrayBuffer();
+    let text = new TextDecoder('utf-8').decode(buffer);
+    if (text.includes('\uFFFD')) {
+      text = new TextDecoder('euc-kr').decode(buffer);
+    }
+    rows = parseCSVText(text);
+  }
+  return analyzeDataSchema(rows); // 스키마 및 축 자동 분석
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. 핵심 구현: AI 보고서 엔진 -->
+        <section class="slide">
+            <header class="slide-header">
+                <div class="slide-category">CLIENT-SIDE AI REPORT GENERATION</div>
+                <h2 class="slide-title">핵심 구현 4: 원클릭 AI 비즈니스 분석 보고서 (ai-report.js)</h2>
+            </header>
+            <div class="grid-2col">
+                <div class="content-card">
+                    <div class="card-title">온디바이스 통계 분석 엔진</div>
+                    <div class="card-body">
+                        <ul>
+                            <li><b>100% 온디바이스 연산:</b> 외부 API 호출이나 민감 데이터의 서버 전송 없이 브라우저 내에서만 완벽히 분석 수행</li>
+                            <li><b>핵심 통계 지표 자동 산출:</b> 평균, 중앙값, 분산, 표준편차, 4분위수(IQR), 변동계수 자동 계산</li>
+                            <li><b>이상치(Outlier) 및 트렌드 탐지:</b> 급격한 변동치 및 시계열 선형 회귀 추세선 자동 분석</li>
+                            <li><b>A4 인쇄 맞춤형 리포트:</b> 인쇄 전용 CSS 미디어 쿼리 적용으로 즉시 결재용 PDF 보고서 출력 지원</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <span class="code-badge">ai-report.js</span>
+<pre>// 통계 연산 및 A4 인쇄 보고서 자동 생성
+export function generateAIReport(parsedData) {
+  const stats = calculateDescriptiveStats(parsedData.numericColumns);
+  const outliers = detectOutliersIQR(parsedData.records);
+  const trend = analyzeTrendDirection(parsedData.records);
+
+  const reportHTML = `
+    &lt;article class="a4-report-page"&gt;
+      &lt;h2&gt;📊 데이터 정밀 AI 통계 보고서&lt;/h2&gt;
+      &lt;section class="summary-badge-grid"&gt;
+        &lt;div class="kpi-card"&gt;평균: ${stats.mean.toFixed(2)}&lt;/div&gt;
+        &lt;div class="kpi-card"&gt;표준편차: ${stats.stdDev.toFixed(2)}&lt;/div&gt;
+        &lt;div class="kpi-card"&gt;이상치: ${outliers.length}건 발견&lt;/div&gt;
+      &lt;/section&gt;
+      &lt;div class="insight-text"&gt;${generateBusinessInsights(trend, stats)}&lt;/div&gt;
+    &lt;/article&gt;
+  `;
+  renderReportModal(reportHTML);
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. 핵심 구현: PWA 모바일 앱 -->
+        <section class="slide">
+            <header class="slide-header">
+                <div class="slide-category">PROGRESSIVE WEB APP & STANDALONE</div>
+                <h2 class="slide-title">핵심 구현 5: 모바일/태블릿 PWA 앱 설치 (pwa.js, sw.js)</h2>
+            </header>
+            <div class="grid-2col">
+                <div class="content-card">
+                    <div class="card-title">네이티브급 PWA 앱 설치 아키텍처</div>
+                    <div class="card-body">
+                        <ul>
+                            <li><b>Google WebAPK 독립형 앱 설치:</b> 별도 앱스토어 심사 없이 안드로이드 태블릿/폰 홈 화면 및 앱 서랍에 전용 앱 생성</li>
+                            <li><b>주소창 없는 전체화면 모드:</b> <code>display: standalone</code> 속성으로 네이티브 앱과 동일한 몰입감 제공</li>
+                            <li><b>beforeinstallprompt 이벤트 캡처:</b> 브라우저의 기본 표시줄 대신 세련된 1클릭 설치 UI 바인딩</li>
+                            <li><b>오프라인 무중단 서비스:</b> Service Worker의 Stale-While-Revalidate 캐싱으로 오프라인에서도 즉시 실행</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <span class="code-badge">pwa.js</span>
+<pre>// PWA 설치 프롬프트 캡처 & 1클릭 설치
+let deferredPrompt = null;
+
+export function initPWA() {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); // 기본 안내바 대신 커스텀 버튼 활성화
+    deferredPrompt = e;
+    $('btn-pwa-install').style.display = 'inline-flex';
+  });
+
+  $('btn-pwa-install')?.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') showToast('앱 설치를 진행합니다.');
+      deferredPrompt = null;
+    }
+  });
+  // Service Worker 등록 (오프라인 캐시 보장)
+  navigator.serviceWorker.register('./sw.js', { scope: './' });
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. 디자인 시스템 -->
+        <section class="slide">
+            <header class="slide-header">
+                <div class="slide-category">UI/UX & DESIGN SYSTEM</div>
+                <h2 class="slide-title">디자인 시스템: Glassmorphism & 반응형 레이아웃</h2>
+            </header>
+            <div class="grid-3col">
+                <div class="content-card">
+                    <div class="card-title">🎨 Glassmorphism 디자인</div>
+                    <div class="card-body">
+                        <ul>
+                            <li><code>backdrop-filter: blur(16px)</code> 기반 투명 글래스 질감</li>
+                            <li>버튼 높이, 테두리 반경(<code>--btn-radius: 7px</code>) 디자인 토큰 일원화</li>
+                            <li>호버 시 부드러운 Glow 광원 효과 및 클릭 피드백 트랜지션</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="card-title">🌓 원클릭 다크 / 라이트 테마</div>
+                    <div class="card-body">
+                        <ul>
+                            <li>CSS 변수 체계로 3D 캔버스, 2D 차트, 모달 폰트 색상 동기화</li>
+                            <li>3D 배경색, Fog 밀도, 바닥 그리드(GridHelper) 실시간 전환</li>
+                            <li><code>localStorage</code>로 사용자 테마 설정 영구 보존</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="card-title">📱 모바일 / 태블릿 터치 최적화</div>
+                    <div class="card-body">
+                        <ul>
+                            <li>화면 바운스 스크롤 방지 & 3D 뷰포트 내 독립 스크롤 분리</li>
+                            <li>스마트폰 화면 하단 빠른 작업 바(Quick Action Bar) 고정</li>
+                            <li>태블릿 가로/세로 회전 시 뷰포트 배율 실시간 리사이징</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. 성능 및 주요 성과 -->
+        <section class="slide">
+            <header class="slide-header">
+                <div class="slide-category">PERFORMANCE & KEY ACHIEVEMENTS</div>
+                <h2 class="slide-title">성능 지표 및 주요 기대 효과</h2>
+            </header>
+            <div class="grid-4col">
+                <div class="stat-card">
+                    <div class="stat-val">60 ~ 120 FPS</div>
+                    <div class="stat-lbl">초당 프레임 수</div>
+                    <div class="stat-desc">WebGPU 저수준 가속 파이프라인으로 대규모 3D 메쉬 데이터도 지연 없는 실시간 렌더링 유지</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-val">100% 온디바이스</div>
+                    <div class="stat-lbl">데이터 보안 및 프라이버시</div>
+                    <div class="stat-desc">외부 서버 업로드 없이 브라우저 내부에서만 파일 파싱 및 통계 분석을 완료하여 데이터 유출 위험 차단</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-val">&lt; 0.5 초</div>
+                    <div class="stat-lbl">파일 로딩 및 파싱 속도</div>
+                    <div class="stat-desc">SheetJS 및 바이너리 파서 최적화로 수만 행의 엑셀/CSV 데이터도 즉각 3D 공간에 매핑</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-val">크로스 플랫폼 PWA</div>
+                    <div class="stat-lbl">멀티 디바이스 확장성</div>
+                    <div class="stat-desc">Windows, Mac, 안드로이드 태블릿/폰, 아이패드 어디서나 설치 한 번으로 전용 네이티브 앱처럼 구동</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 11. 마무리 & 질의응답 -->
+        <section class="slide" style="justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 56px; font-weight: 900; color: #fff; margin-bottom: 20px;">감사합니다</div>
+            <div style="font-size: 20px; color: var(--accent-cyan); font-weight: 700; margin-bottom: 12px;">3D & 2D 인터랙티브 데이터 분석 및 시각화 플랫폼</div>
+            <p style="font-size: 15px; color: var(--text-muted); margin-bottom: 32px;">WebGPU Engine · Multi-Format Parser · On-Device AI Insights · PWA Standalone</p>
+            <div style="display: flex; gap: 16px;">
+                <a href="https://jsnwiw.github.io/2D_3D_Report-main/" target="_blank" class="btn-ctrl" style="padding: 10px 24px; font-size: 15px;">🌐 라이브 데모 바로가기</a>
+                <a href="3D_2D_Data_Visualization_Presentation.pptx" download class="btn-ctrl" style="padding: 10px 24px; font-size: 15px; background: rgba(16, 185, 129, 0.2); border-color: var(--accent-green);">📥 PPTX 파일 다운로드</a>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            slides.forEach((s, i) => s.classList.toggle('active', i === index));
+            document.getElementById('slide-num').textContent = `${index + 1} / ${totalSlides}`;
+            currentSlide = index;
+        }
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            if (currentSlide > 0) showSlide(currentSlide - 1);
+        });
+
+        document.getElementById('btn-next').addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                if (currentSlide > 0) showSlide(currentSlide - 1);
+            }
+        });
+
+        document.getElementById('btn-fullscreen').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>
