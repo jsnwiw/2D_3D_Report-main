@@ -89,6 +89,7 @@
 - **모달 헤더·아이콘 수정**: “⚡ Vulkan / WebGPU” 배지 → “💻 실행 기기 상세 정보”로 변경, 중복 행 제거.
 - **서비스워커 캐시 버전 업데이트**: `3d-vis-cache-v15` 로 상승해 최신 파일 강제 로드.
 - **UI 표시 업데이트**: `getSystemInfo()` 결과를 이용해 CPU 정보를 `cpuBrand • cpuCores 논리 코어` 형식으로 표시.
+- **Device Memory API 지원** (2026‑11‑18): `js/device.js`에 `getDeviceMemory()` 함수를 추가하고, `index.html`에 RAM 정보를 UI에 표시하도록 구현했습니다. 이제 지원 브라우저에서 대략적인 기기 RAM(GB)을 확인할 수 있습니다.
 
 ## ⚡ 차세대 GPU 그래픽스 아키텍처 (Vulkan / WebGPU)
 
