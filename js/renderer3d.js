@@ -22,6 +22,38 @@ const mouse = new THREE.Vector2();
 const tempVec = new THREE.Vector3();
 const clock = new THREE.Clock();
 
+// Helper: create a glowing halo for hovered objects
+function createHoverHalo(object) {
+  // If halo already exists, ensure it's visible
+  if (object.userData.hoverHalo) {
+    object.userData.hoverHalo.visible = true;
+    return object.userData.hoverHalo;
+  }
+  // Determine size based on geometry bounding box
+  const bbox = new THREE.Box3().setFromObject(object);
+  const size = new THREE.Vector3();
+  bbox.getSize(size);
+  const maxDim = Math.max(size.x, size.z);
+  const radius = Math.max(maxDim, size.y) * 0.6;
+  const geometry = new THREE.RingGeometry(radius * 0.9, radius * 1.1, 32);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xffff00,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.5,
+    depthTest: false,
+    blending: THREE.AdditiveBlending
+  });
+  const halo = new THREE.Mesh(geometry, material);
+  // orient ring parallel to ground (XZ plane)
+  halo.rotation.x = Math.PI / 2;
+  // position at object's top
+  halo.position.y = size.y / 2;
+  object.add(halo);
+  object.userData.hoverHalo = halo;
+  return halo;
+}
+
 let lastFpsUpdateTime = performance.now();
 let frameCount = 0;
 let mouseNeedsCheck = false;
@@ -762,7 +794,31 @@ function performRaycast() {
     if (hits.length > 0) {
         const hit = hits[0].object;
         if (hoveredObject !== hit) {
+            // Hide previous hover halo if any
+            if (hoveredObject && hoveredObject.userData.hoverHalo) {
+                hoveredObject.userData.hoverHalo.visible = false;
+            }
+            // Reset previous hovered object's emissive
             if (hoveredObject && hoveredObject !== selectedObject) {
+                hoveredObject.material.emissive?.setHex(0x000000);
+            }
+            hoveredObject = hit;
+            // Show halo for new hovered object
+            if (hoveredObject !== selectedObject) {
+                hoveredObject.material.emissive?.setHex(0x312e81);
+                // Create or show halo
+                if (!hoveredObject.userData.hoverHalo) {
+                    createHoverHalo(hoveredObject);
+                } else {
+                    hoveredObject.userData.hoverHalo.visible = true;
+                }
+            }
+        }
+            if (hoveredObject && hoveredObject !== selectedObject) {
+        // Hide previous hover halo
+        if (hoveredObject.userData.hoverHalo) {
+            hoveredObject.userData.hoverHalo.visible = false;
+        }
                 hoveredObject.material.emissive?.setHex(0x000000);
             }
             hoveredObject = hit;
@@ -782,6 +838,10 @@ function performRaycast() {
         container.style.cursor = 'pointer';
     } else {
         if (hoveredObject && hoveredObject !== selectedObject) {
+        // Hide previous hover halo
+        if (hoveredObject.userData.hoverHalo) {
+            hoveredObject.userData.hoverHalo.visible = false;
+        }
             hoveredObject.material.emissive?.setHex(0x000000);
         }
         hoveredObject = null;
@@ -809,6 +869,10 @@ function setupRaycasting() {
 
     container.addEventListener('mouseleave', () => {
         if (hoveredObject && hoveredObject !== selectedObject) {
+        // Hide previous hover halo
+        if (hoveredObject.userData.hoverHalo) {
+            hoveredObject.userData.hoverHalo.visible = false;
+        }
             hoveredObject.material.emissive?.setHex(0x000000);
         }
         hoveredObject = null;
