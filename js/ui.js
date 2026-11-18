@@ -4,7 +4,7 @@
  * ==============================================================================
  */
 import * as THREE from 'three';
-import { $, appState, showToast, getSystemInfo, isSamsungGalaxyDevice, getRamPlusState, setRamPlusState, setUserRamSelection } from './state.js';
+import { $, appState, showToast, getSystemInfo, isSamsungGalaxyDevice, getRamPlusState, setRamPlusState } from './state.js';
 import { loadAndParseFile } from './parser.js';
 import { update3DTheme } from './renderer3d.js';
 
@@ -361,22 +361,6 @@ export function setupGpuModal() {
 
     badge?.addEventListener('click', openGpuModal);
     mobileBadge?.addEventListener('click', openGpuModal);
-
-    // 기기 실제 RAM 용량 순환 변경 (8GB -> 12GB -> 16GB -> 24GB -> 32GB -> 8GB)
-    const btnToggleRam = $('btn-toggle-ram');
-    btnToggleRam?.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const sysInfo = getSystemInfo();
-        const ramOptions = [8, 12, 16, 24, 32, 64];
-        const currentRam = sysInfo.deviceMemoryGB || 12;
-        let nextIndex = ramOptions.indexOf(currentRam) + 1;
-        if (nextIndex >= ramOptions.length || nextIndex < 0) nextIndex = 0;
-        const nextRam = ramOptions[nextIndex];
-        setUserRamSelection(String(nextRam));
-        updateSamsungRamPlusUI();
-        showToast(`기기 물리 RAM이 ${nextRam} GB로 설정되었습니다.`);
-    });
 
     // 삼성 RAM Plus 상태 토글 버튼 이벤트 등록
     const btnToggleRamPlus = $('btn-toggle-ramplus');
