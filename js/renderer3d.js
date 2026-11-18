@@ -45,13 +45,18 @@ export async function initThreeScene() {
     appState.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 500);
     appState.camera.position.set(0, 10, 20);
 
-    appState.renderer = new WebGPURenderer({ antialias: true, alpha: false, forceWebGL: false });
+    appState.renderer = new WebGPURenderer({ 
+        antialias: true, 
+        alpha: false, 
+        forceWebGL: false,
+        powerPreference: 'high-performance'
+    });
     await appState.renderer.init();
 
-    // 실제 어댑터 정보 조회
+    // 실제 어댑터 정보 조회 (고성능 모드 요청)
     if ('gpu' in navigator) {
         try {
-            const adapter = await navigator.gpu.requestAdapter();
+            const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
             if (adapter) {
                 const info = await adapter.requestAdapterInfo?.();
                 if (info) {

@@ -122,7 +122,10 @@ export function updateGpuModalLivePerformance() {
     modalGpuFps.textContent = `${gpuState.fps} FPS (${gpuState.frameTimeMs} ms)`;
 
     if (modalGpuFpsBadge) {
-        if (gpuState.fps >= 55) {
+        if (gpuState.fps >= 90) {
+            modalGpuFpsBadge.className = 'fps-status-badge extreme';
+            modalGpuFpsBadge.textContent = '🟣 초고주사율 (120Hz Ultra Smooth)';
+        } else if (gpuState.fps >= 55) {
             modalGpuFpsBadge.className = 'fps-status-badge smooth';
             modalGpuFpsBadge.textContent = '🟢 쾌적 (Ultra Smooth)';
         } else if (gpuState.fps >= 30) {
@@ -278,22 +281,24 @@ export function drawFpsSparkline() {
     const history = appState.gpuEngineState.fpsHistory;
     if (history.length < 2) return;
 
-    const maxVal = Math.max(75, ...history, appState.gpuEngineState.maxFps || 60);
-    const y60 = h - (60 / maxVal) * (h - 10) - 4;
+    const isHighRefresh = (appState.gpuEngineState.maxFps || 0) >= 85;
+    const targetGuideFps = isHighRefresh ? 120 : 60;
+    const maxVal = Math.max(isHighRefresh ? 130 : 75, ...history, appState.gpuEngineState.maxFps || 60);
+    const yGuide = h - (targetGuideFps / maxVal) * (h - 10) - 4;
 
-    // 60 FPS 기준 가이드라인
-    ctx.strokeStyle = 'rgba(52, 211, 153, 0.25)';
+    // 동적 가이드라인 (120 FPS / 60 FPS 무제한 주사율)
+    ctx.strokeStyle = isHighRefresh ? 'rgba(192, 132, 252, 0.4)' : 'rgba(52, 211, 153, 0.25)';
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
-    ctx.moveTo(0, y60);
-    ctx.lineTo(w, y60);
+    ctx.moveTo(0, yGuide);
+    ctx.lineTo(w, yGuide);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = 'rgba(52, 211, 153, 0.5)';
+    ctx.fillStyle = isHighRefresh ? 'rgba(192, 132, 252, 0.85)' : 'rgba(52, 211, 153, 0.5)';
     ctx.font = '9px monospace';
-    ctx.fillText('60 FPS 기준선', 6, Math.max(10, y60 - 2));
+    ctx.fillText(`${targetGuideFps} FPS (디스플레이 풀 프레임)`, 6, Math.max(10, yGuide - 2));
 
     // 트렌드 라인
     const stepX = w / (history.length - 1);
