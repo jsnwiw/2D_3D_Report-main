@@ -1,72 +1,127 @@
-/* ===============================
-   5. A4 인쇄 / PDF 보고서 출력 전용 스타일
+
+/* 5. A4 인쇄 / PDF 보고서 출력 전용 스타일 (전체 페이지 출력 지원)
    =============================== */
 @media print {
-    /* 화면용 인터랙티브 요소 모두 숨김 */
+    /* 1) 화면 전용 UI 요소 및 모달 숨김 */
+    body > :not(#print-report-container),
     #top-bar, #upload-panel, #menu-panel, #chart-panel,
     #time-player-bar, #toast-notification, #gpu-info-modal,
     #canvas-container, #hover-tooltip, #label-layer,
-    .drag-drop-overlay, #ai-report-modal, #ai-api-modal, .modal-backdrop {
+    .drag-drop-overlay, #ai-report-modal, #ai-api-modal, .modal-backdrop,
+    .modal-overlay, #pwa-ios-modal, #file-protocol-warning,
+    .report-edit-banner, .no-print {
         display: none !important;
     }
 
-    body, html {
+    /* 2) body/html의 position:fixed 및 overflow:hidden 완전 해제 (모든 페이지 출력 필수) */
+    html, body {
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        float: none !important;
+        inset: auto !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
         background: #ffffff !important;
         background-color: #ffffff !important;
         background-image: none !important;
         color: #0f172a !important;
         color-scheme: light !important;
-        overflow: visible !important;
-        height: auto !important;
         font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
 
-    body * {
-        background: #ffffff !important;
-        background-image: none !important;
-        box-shadow: none !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
+    /* 3) 인쇄 전용 보고서 컨테이너 설정 (높이 제한 해제) */
     #print-report-container {
         display: block !important;
+        position: static !important;
         width: 100% !important;
-        padding: 0 !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
         margin: 0 !important;
-        min-height: 100vh !important;
+        padding: 0 !important;
+        float: none !important;
         background: #ffffff !important;
         color: #0f172a !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
     }
 
-    #print-report-container,
-    #print-report-container * {
-        background: #ffffff !important;
-        background-image: none !important;
-        color: #0f172a !important;
+    /* 4) 페이지 경계 분할 제어:
+       - 상위 컨테이너(섹션, 그리드, 리스트, 테이블 본체)는 페이지를 자연스럽게 넘어가도록 허용
+       - 개별 카드, 항목, 헤더, 결재란 등 단일 개체는 페이지 중간에서 잘리지 않도록 보호
+    */
+    .report-section,
+    .report-deep-grid,
+    .report-recom-list,
+    .report-visual-grid,
+    .report-stats-grid-8,
+    .report-table,
+    .report-table tbody {
+        break-inside: auto !important;
+        page-break-inside: auto !important;
     }
 
-    /* 인쇄 시 페이지 경계에서 카드가 잘리거나 겹치지 않도록 보호 */
     .report-doc-top,
     .report-doc-header,
-    .report-stats-grid-8,
     .report-kpi-card,
-    .report-visual-grid,
     .report-visual-card,
-    .report-deep-grid,
     .report-deep-card,
-    .report-recom-list,
-    .report-recom-card,
-    .report-approval-block {
-        page-break-inside: avoid !important;
+    .report-recom-item,
+    .report-approval-block,
+    .report-table tr {
         break-inside: avoid !important;
+        page-break-inside: avoid !important;
     }
 
+    .report-table thead {
+        display: table-header-group !important;
+    }
+
+    /* 5) 이미지 및 차트 반응형 인쇄 크기 최적화 */
+    .report-visual-card img,
+    .report-2d-chart-img {
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 280px !important;
+        object-fit: contain !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    .report-chart-img-wrap {
+        min-height: auto !important;
+        max-height: 290px !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* 6) 인쇄 시 그림자 제거 및 색상 유지 */
+    .ai-report-paper,
+    .report-visual-card,
+    .report-deep-card,
+    .report-recom-item,
+    .report-kpi-card {
+        box-shadow: none !important;
+    }
+
+    /* 7) A4 용지 규격 및 여백 지정 */
     @page {
         size: A4 portrait;
-        margin: 10mm 12mm;
+        margin: 12mm 14mm 14mm 14mm;
     }
 }
 
@@ -185,8 +240,7 @@
     font-weight: 700;
 }
 
-/* =======================================================
-   15. AI 맞춤 분석 보고서 스튜디오 (AI Report Studio Modal & Paper)
+/* 15. AI 맞춤 분석 보고서 스튜디오 (AI Report Studio Modal & Paper)
    ======================================================= */
 .ai-report-shortcut-wrap {
     margin-bottom: 12px;

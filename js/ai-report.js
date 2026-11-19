@@ -246,16 +246,32 @@ export function printCurrentReport() {
     reportContainer.innerHTML = aiReportContent.innerHTML;
     reportContainer.style.display = 'block';
 
-    showToast('📑 <strong>A4 인쇄 창</strong>이 열렸습니다. [대상: PDF로 저장]을 선택하시면 PDF 파일로 보관하실 수 있습니다!');
+    showToast('📑 <strong>A4 인쇄 창</strong>이 열렸습니다. [대상: PDF로 저장]을 선택하시면 모든 페이지를 PDF 파일로 보관하실 수 있습니다!');
 
     setTimeout(() => {
         window.print();
     }, 250);
-
-    window.onafterprint = () => {
-        reportContainer.style.display = 'none';
-    };
 }
+
+// 브라우저 단축키(Ctrl+P) 또는 메뉴 인쇄 호출 시에도 보고서 컨테이너 자동 동기화 지원
+window.addEventListener('beforeprint', () => {
+    const aiReportContent = $('ai-report-content');
+    const reportContainer = $('print-report-container');
+    if (aiReportContent && aiReportContent.innerHTML.trim() && reportContainer) {
+        if (!reportContainer.innerHTML.trim() || reportContainer.style.display === 'none') {
+            reportContainer.innerHTML = aiReportContent.innerHTML;
+            reportContainer.style.display = 'block';
+        }
+    }
+});
+
+window.addEventListener('afterprint', () => {
+    const reportContainer = $('print-report-container');
+    if (reportContainer) {
+        reportContainer.style.display = 'none';
+        reportContainer.innerHTML = '';
+    }
+});
 
 /**
  *  ✨ AI 보고서 자동 작성 메인 컨트롤러
