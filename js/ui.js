@@ -7,6 +7,74 @@ import * as THREE from 'three';
 import { $, appState, showToast, getSystemInfo, isSamsungGalaxyDevice, getRamPlusState, setRamPlusState } from './state.js';
 import { loadAndParseFile } from './parser.js';
 import { update3DTheme } from './renderer3d.js';
+import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.2/gsap.esm.min.js';
+
+// Helper: animate accordion body open/close
+function animateAccordionBody(body, opening) {
+  if (!body) return;
+  body.style.overflow = 'hidden';
+  if (opening) {
+    body.style.display = 'block';
+    const fullHeight = body.scrollHeight;
+    gsap.fromTo(body, { height: 0, opacity: 0 }, {
+      height: fullHeight,
+      opacity: 1,
+      duration: 0.6,
+      ease: 'elastic.out(1, 0.5)',
+      onComplete: () => {
+        body.style.height = 'auto';
+        body.style.overflow = '';
+      }
+    });
+  } else {
+    const curHeight = body.scrollHeight;
+    gsap.fromTo(body, { height: curHeight, opacity: 1 }, {
+      height: 0,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'elastic.in(1, 0.5)',
+      onComplete: () => {
+        body.style.display = 'none';
+        body.style.height = '';
+        body.style.overflow = '';
+      }
+    });
+  }
+}
+
+// Helper: slide toggle for upload panel
+function animateSlideToggle(panel, show) {
+  if (!panel) return;
+  panel.style.overflow = 'hidden';
+  if (show) {
+    panel.style.display = 'block';
+    const fullHeight = panel.scrollHeight;
+    gsap.fromTo(panel, { height: 0, opacity: 0 }, {
+      height: fullHeight,
+      opacity: 1,
+      duration: 0.5,
+      ease: 'elastic.out(1, 0.5)',
+      onComplete: () => {
+        panel.style.height = 'auto';
+        panel.style.overflow = '';
+      }
+    });
+  } else {
+    const curHeight = panel.scrollHeight;
+    gsap.fromTo(panel, { height: curHeight, opacity: 1 }, {
+      height: 0,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'elastic.in(1, 0.5)',
+      onComplete: () => {
+        panel.style.display = 'none';
+        panel.style.height = '';
+        panel.style.overflow = '';
+      }
+    });
+  }
+}
+
 
 let totalRenderFrames = 0;
 
@@ -14,6 +82,40 @@ let totalRenderFrames = 0;
  * 단일 아코디언 섹션 열기
  */
 export function openAccordionSection(sectionId) {
+    const section = $(sectionId);
+    if (!section) return;
+
+    document.querySelectorAll('.accordion-item').forEach(item => {
+        const body = item.querySelector('.accordion-body');
+        const header = item.querySelector('.accordion-header');
+        const chevron = item.querySelector('.chevron');
+        const isTarget = (item === section);
+        if (isTarget) {
+            item.classList.add('active');
+            if (header) header.classList.add('active');
+            if (chevron) chevron.textContent = '▴';
+            // animate open
+            animateAccordionBody(body, true);
+        } else {
+            item.classList.remove('active');
+            if (header) header.classList.remove('active');
+            if (chevron) chevron.textContent = '▾';
+            // animate close
+            animateAccordionBody(body, false);
+        }
+    });
+
+    const menuContent = document.querySelector('.menu-content');
+    if (menuContent) {
+        setTimeout(() => {
+            const rect = section.getBoundingClientRect();
+            const containerRect = menuContent.getBoundingClientRect();
+            if (rect.top < containerRect.top || rect.bottom > containerRect.bottom) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 80);
+    }
+}
     const section = $(sectionId);
     if (!section) return;
 

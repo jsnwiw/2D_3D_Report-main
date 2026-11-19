@@ -4,6 +4,7 @@
  * ==============================================================================
  */
 import * as THREE from 'three';
+import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.2/gsap.esm.min.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import WebGPURenderer from 'three/addons/renderers/webgpu/WebGPURenderer.js';
 import { $, appState, showToast, getSystemInfo } from './state.js';
@@ -456,6 +457,8 @@ function renderColumns(labels, values, maxVal, minVal, maxH, style) {
 
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(x, h / 2, z);
+        mesh.scale.set(0.001, 0.001, 0.001);
+        gsap.to(mesh.scale, { x: 1, y: 1, z: 1, duration: 0.8, ease: "elastic.out(1, 0.5)" });
         mesh.userData = { name: label, value: val, idx, color: color.clone() };
 
         appState.scene.add(mesh);
@@ -496,6 +499,8 @@ function renderPieOrDonut(labels, values, maxVal, isDonut) {
         const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.2 });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(0, h, 0);
+        mesh.scale.set(0.001, 0.001, 0.001);
+        gsap.to(mesh.scale, { x: 1, y: 1, z: 1, duration: 0.8, ease: "elastic.out(1, 0.5)" });
         mesh.userData = { name: label, value: val, idx, color: color.clone() };
 
         appState.scene.add(mesh);
