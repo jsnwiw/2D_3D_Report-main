@@ -7,74 +7,55 @@ import * as THREE from 'three';
 import { $, appState, showToast, getSystemInfo, isSamsungGalaxyDevice, getRamPlusState, setRamPlusState } from './state.js';
 import { loadAndParseFile } from './parser.js';
 import { update3DTheme } from './renderer3d.js';
-import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.2/gsap.esm.min.js';
-
-// Helper: animate accordion body open/close
+// Helper: animate accordion body open/close with spring/elastic motion
 function animateAccordionBody(body, opening) {
-  if (!body) return;
-  body.style.overflow = 'hidden';
-  if (opening) {
-    body.style.display = 'block';
-    const fullHeight = body.scrollHeight;
-    gsap.fromTo(body, { height: 0, opacity: 0 }, {
-      height: fullHeight,
-      opacity: 1,
-      duration: 0.8,
-      ease: 'elastic.out(1, 0.4)',
-      onComplete: () => {
-        body.style.height = 'auto';
-        body.style.overflow = '';
-      }
-    });
-  } else {
-    const curHeight = body.scrollHeight;
-    gsap.fromTo(body, { height: curHeight, opacity: 1 }, {
-      height: 0,
-      opacity: 0,
-      duration: 0.6,
-      ease: 'elastic.in(1, 0.4)',
-      onComplete: () => {
-        body.style.display = 'none';
-        body.style.height = '';
-        body.style.overflow = '';
-      }
-    });
-  }
-}
+    if (!body) return;
+    if (body._anim) {
+        try { body._anim.cancel(); } catch (e) {}
+    }
+    if (opening) {
+        body.classList.add('open');
+        body.style.display = 'block';
+        body.style.overflow = 'hidden';
+        const targetHeight = body.scrollHeight;
+        body.style.height = '0px';
 
-// Helper: slide toggle for upload panel
-function animateSlideToggle(panel, show) {
-  if (!panel) return;
-  panel.style.overflow = 'hidden';
-  if (show) {
-    panel.style.display = 'block';
-    const fullHeight = panel.scrollHeight;
-    gsap.fromTo(panel, { height: 0, opacity: 0 }, {
-      height: fullHeight,
-      opacity: 1,
-      duration: 0.8,
-      ease: 'elastic.out(1, 0.4)',
-      onComplete: () => {
-        panel.style.height = 'auto';
-        panel.style.overflow = '';
-      }
-    });
-  } else {
-    const curHeight = panel.scrollHeight;
-    gsap.fromTo(panel, { height: curHeight, opacity: 1 }, {
-      height: 0,
-      opacity: 0,
-      duration: 0.8,
-      ease: 'elastic.in(1, 0.4)',
-      onComplete: () => {
-        panel.style.display = 'none';
-        panel.style.height = '';
-        panel.style.overflow = '';
-      }
-    });
-  }
+        const anim = body.animate([
+            { height: '0px', opacity: 0, transform: 'translateY(-6px) scale(0.98)' },
+            { height: `${targetHeight}px`, opacity: 1, transform: 'translateY(0) scale(1)' }
+        ], {
+            duration: 420,
+            easing: 'cubic-bezier(0.34, 1.45, 0.64, 1)',
+            fill: 'forwards'
+        });
+        body._anim = anim;
+        anim.onfinish = () => {
+            body.style.overflow = '';
+            body.style.height = '';
+            body.style.display = '';
+            body._anim = null;
+        };
+    } else {
+        const curHeight = body.scrollHeight;
+        body.style.overflow = 'hidden';
+        const anim = body.animate([
+            { height: `${curHeight}px`, opacity: 1, transform: 'translateY(0) scale(1)' },
+            { height: '0px', opacity: 0, transform: 'translateY(-6px) scale(0.98)' }
+        ], {
+            duration: 320,
+            easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+            fill: 'forwards'
+        });
+        body._anim = anim;
+        anim.onfinish = () => {
+            body.classList.remove('open');
+            body.style.overflow = '';
+            body.style.height = '';
+            body.style.display = '';
+            body._anim = null;
+        };
+    }
 }
-
 
 let totalRenderFrames = 0;
 
@@ -94,13 +75,11 @@ export function openAccordionSection(sectionId) {
             item.classList.add('active');
             if (header) header.classList.add('active');
             if (chevron) chevron.textContent = '▴';
-            // animate open
             animateAccordionBody(body, true);
-        } else {
+        } else if (item.classList.contains('active')) {
             item.classList.remove('active');
             if (header) header.classList.remove('active');
             if (chevron) chevron.textContent = '▾';
-            // animate close
             animateAccordionBody(body, false);
         }
     });
@@ -115,8 +94,6 @@ export function openAccordionSection(sectionId) {
             }
         }, 80);
     }
-}
-    
 }
 
 /**
@@ -134,8 +111,8 @@ export function setupAccordionUI() {
                 header.classList.remove('active');
                 const body = parent.querySelector('.accordion-body');
                 const chevron = header.querySelector('.chevron');
-                if (body) body.classList.remove('open');
                 if (chevron) chevron.textContent = '▾';
+                if (body) animateAccordionBody(body, false);
             } else {
                 openAccordionSection(parent.id);
             }
@@ -167,20 +144,63 @@ export function setupMenuScroll() {
  */
 export function setupUploadCardToggle() {
     const uploadPanel = $('upload-panel');
+    const uploadCardBody = $('upload-card-body');
     const btnToggleUploadCard = $('btn-toggle-upload-card');
 
     btnToggleUploadCard?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!uploadPanel) return;
-        const willCollapse = uploadPanel.classList.toggle('collapsed');
-        document.body.classList.toggle('upload-collapsed', willCollapse);
-        // animate slide accordingly
-        if (willCollapse) {
-            // hide panel
-            animateSlideToggle(uploadPanel, false);
+        const isCollapsed = uploadPanel.classList.contains('collapsed');
+
+        if (uploadCardBody) {
+            if (uploadCardBody._anim) {
+                try { uploadCardBody._anim.cancel(); } catch (err) {}
+            }
+            if (!isCollapsed) {
+                // 접기: 부드럽게 축소
+                const h = uploadCardBody.scrollHeight;
+                uploadCardBody.style.overflow = 'hidden';
+                const anim = uploadCardBody.animate([
+                    { height: `${h}px`, opacity: 1, transform: 'translateY(0) scale(1)' },
+                    { height: '0px', opacity: 0, transform: 'translateY(-6px) scale(0.98)' }
+                ], {
+                    duration: 340,
+                    easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+                    fill: 'forwards'
+                });
+                uploadCardBody._anim = anim;
+                anim.onfinish = () => {
+                    uploadPanel.classList.add('collapsed');
+                    document.body.classList.add('upload-collapsed');
+                    uploadCardBody.style.overflow = '';
+                    uploadCardBody.style.height = '';
+                    uploadCardBody._anim = null;
+                };
+            } else {
+                // 펼치기: 쫀득한 오버슈트 바운스
+                uploadPanel.classList.remove('collapsed');
+                document.body.classList.remove('upload-collapsed');
+                const targetH = uploadCardBody.scrollHeight;
+                uploadCardBody.style.overflow = 'hidden';
+                uploadCardBody.style.height = '0px';
+                const anim = uploadCardBody.animate([
+                    { height: '0px', opacity: 0, transform: 'translateY(-6px) scale(0.98)' },
+                    { height: `${targetH}px`, opacity: 1, transform: 'translateY(0) scale(1)' }
+                ], {
+                    duration: 440,
+                    easing: 'cubic-bezier(0.34, 1.45, 0.64, 1)',
+                    fill: 'forwards'
+                });
+                uploadCardBody._anim = anim;
+                anim.onfinish = () => {
+                    uploadCardBody.style.overflow = '';
+                    uploadCardBody.style.height = '';
+                    uploadCardBody._anim = null;
+                };
+            }
         } else {
-            // show panel
-            animateSlideToggle(uploadPanel, true);
+            const willCollapse = uploadPanel.classList.toggle('collapsed');
+            document.body.classList.toggle('upload-collapsed', willCollapse);
         }
     });
 }

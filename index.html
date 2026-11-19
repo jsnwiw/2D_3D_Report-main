@@ -46,6 +46,27 @@
                     else document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('dark-mode'); });
                 }
             } catch(e) {}
+
+            // file:// 프로토콜 실행 시 브라우저 CORS 차단 안내
+            if (window.location.protocol === 'file:') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    var banner = document.createElement('div');
+                    banner.id = 'file-protocol-modal';
+                    banner.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);backdrop-filter:blur(10px);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,sans-serif;';
+                    banner.innerHTML = '<div style="background:#1e293b;border:1px solid #3b82f6;border-radius:16px;max-width:540px;width:100%;padding:28px;color:#f8fafc;box-shadow:0 20px 40px rgba(0,0,0,0.5);line-height:1.6;">' +
+                        '<div style="font-size:36px;margin-bottom:12px;">🚀</div>' +
+                        '<h2 style="margin:0 0 10px 0;font-size:20px;color:#60a5fa;">웹 서버 실행이 필요합니다</h2>' +
+                        '<p style="font-size:14px;color:#cbd5e1;margin-bottom:16px;">브라우저 보안 정책상 <code>file:///</code> 경로로 직접 파일을 열면 Three.js 3D 엔진 및 자바스크립트 모듈(ESM)이 자동으로 차단됩니다.</p>' +
+                        '<div style="background:#0f172a;border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;border:1px solid #334155;">' +
+                            '<b>💡 해결 방법 (둘 중 하나 선택):</b><br>' +
+                            '1️⃣ 프로젝트 폴더 안의 <b><code style="color:#38bdf8;">start.bat</code></b> 파일을 더블클릭하세요 (로컬 서버 자동 시작)<br>' +
+                            '2️⃣ 또는 VSCode에서 <b>Live Server</b>로 열어주세요.' +
+                        '</div>' +
+                        '<button onclick="document.getElementById(\'file-protocol-modal\').remove();" style="width:100%;padding:11px;background:#3b82f6;border:none;border-radius:8px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;">닫기</button>' +
+                    '</div>';
+                    document.body.appendChild(banner);
+                });
+            }
         })();
     </script>
 </head>
