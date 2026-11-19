@@ -19,8 +19,8 @@ function animateAccordionBody(body, opening) {
     gsap.fromTo(body, { height: 0, opacity: 0 }, {
       height: fullHeight,
       opacity: 1,
-      duration: 0.6,
-      ease: 'elastic.out(1, 0.5)',
+      duration: 0.8,
+      ease: 'elastic.out(1, 0.4)',
       onComplete: () => {
         body.style.height = 'auto';
         body.style.overflow = '';
@@ -31,8 +31,8 @@ function animateAccordionBody(body, opening) {
     gsap.fromTo(body, { height: curHeight, opacity: 1 }, {
       height: 0,
       opacity: 0,
-      duration: 0.4,
-      ease: 'elastic.in(1, 0.5)',
+      duration: 0.6,
+      ease: 'elastic.in(1, 0.4)',
       onComplete: () => {
         body.style.display = 'none';
         body.style.height = '';
@@ -52,8 +52,8 @@ function animateSlideToggle(panel, show) {
     gsap.fromTo(panel, { height: 0, opacity: 0 }, {
       height: fullHeight,
       opacity: 1,
-      duration: 0.5,
-      ease: 'elastic.out(1, 0.5)',
+      duration: 0.8,
+      ease: 'elastic.out(1, 0.4)',
       onComplete: () => {
         panel.style.height = 'auto';
         panel.style.overflow = '';
@@ -64,8 +64,8 @@ function animateSlideToggle(panel, show) {
     gsap.fromTo(panel, { height: curHeight, opacity: 1 }, {
       height: 0,
       opacity: 0,
-      duration: 0.4,
-      ease: 'elastic.in(1, 0.5)',
+      duration: 0.8,
+      ease: 'elastic.in(1, 0.4)',
       onComplete: () => {
         panel.style.display = 'none';
         panel.style.height = '';
@@ -116,39 +116,7 @@ export function openAccordionSection(sectionId) {
         }, 80);
     }
 }
-    const section = $(sectionId);
-    if (!section) return;
-
-    document.querySelectorAll('.accordion-item').forEach(item => {
-        if (item === section) {
-            item.classList.add('active');
-            const h = item.querySelector('.accordion-header');
-            const b = item.querySelector('.accordion-body');
-            const c = item.querySelector('.chevron');
-            if (h) h.classList.add('active');
-            if (b) b.classList.add('open');
-            if (c) c.textContent = '▴';
-        } else {
-            item.classList.remove('active');
-            const h = item.querySelector('.accordion-header');
-            const b = item.querySelector('.accordion-body');
-            const c = item.querySelector('.chevron');
-            if (h) h.classList.remove('active');
-            if (b) b.classList.remove('open');
-            if (c) c.textContent = '▾';
-        }
-    });
-
-    const menuContent = document.querySelector('.menu-content');
-    if (menuContent) {
-        setTimeout(() => {
-            const rect = section.getBoundingClientRect();
-            const containerRect = menuContent.getBoundingClientRect();
-            if (rect.top < containerRect.top || rect.bottom > containerRect.bottom) {
-                section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }, 80);
-    }
+    
 }
 
 /**
@@ -204,8 +172,16 @@ export function setupUploadCardToggle() {
     btnToggleUploadCard?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!uploadPanel) return;
-        const isCollapsed = uploadPanel.classList.toggle('collapsed');
-        document.body.classList.toggle('upload-collapsed', isCollapsed);
+        const willCollapse = uploadPanel.classList.toggle('collapsed');
+        document.body.classList.toggle('upload-collapsed', willCollapse);
+        // animate slide accordingly
+        if (willCollapse) {
+            // hide panel
+            animateSlideToggle(uploadPanel, false);
+        } else {
+            // show panel
+            animateSlideToggle(uploadPanel, true);
+        }
     });
 }
 
