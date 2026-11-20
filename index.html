@@ -363,7 +363,7 @@
                     <div class="control-group">
                         <label for="chart-type-select"><strong>📊 2D 보조 차트:</strong></label>
                         <select id="chart-type-select">
-                            <option value="auto"> 최적 2D 자동 추천</option>
+                            <option value="auto" selected>✨ 최적 2D AI 자동 추천 (기본)</option>
                             <option value="bar">📊 세로 막대 (규모 비교)</option>
                             <option value="horizontalBar">📊 가로 막대 (다항목)</option>
                             <option value="doughnut">🍩 도넛 차트 (구성비)</option>
@@ -785,6 +785,19 @@
                             <option value="builtin" selected>⚡ 내장 고성능 AI 엔진 (즉시 분석)</option>
                             <option value="gemini">🌐 Google Gemini API (LLM 생성)</option>
                             <option value="openai">🌐 OpenAI GPT API (LLM 생성)</option>
+                        </select>
+                    </div>
+
+                    <!-- 4. 분석 상세도 선택 -->
+                    <div class="ai-control-item">
+                        <div class="ai-control-label-row">
+                            <label for="ai-report-depth">🔍 분석 상세도</label>
+                            <span class="ai-badge-pill" style="background:#10b981;">초정밀 모드</span>
+                        </div>
+                        <select id="ai-report-depth" class="ai-toolbar-select">
+                            <option value="deep" selected>🔥 최고 수준 심층 분석 (Deep-Dive Pro)</option>
+                            <option value="standard">📊 표준 정밀 분석 (Standard)</option>
+                            <option value="executive">⚡ 핵심 경영진 요약 (Executive Brief)</option>
                         </select>
                     </div>
 

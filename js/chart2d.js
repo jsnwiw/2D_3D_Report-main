@@ -117,7 +117,8 @@ export function render2DChart() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const typeLabels = { bar: '막대', horizontalBar: '가로 막대', line: '선', pie: '파이', doughnut: '도넛', scatter: '산점도', radar: '레이더', polarArea: '폴라 에어리어' };
-    if (chartTitle) chartTitle.textContent = `${typeLabels[chartType] || chartType} — ${appState.parsedData.headers[yIdx]}`;
+    const isAuto = !chartTypeSelect || chartTypeSelect.value === 'auto';
+    if (chartTitle) chartTitle.textContent = `${isAuto ? '✨ [AI 추천] ' : ''}${typeLabels[chartType] || chartType} — ${appState.parsedData.headers[yIdx]}`;
 
     const themePalette = values.map((_, i) => COLORS[i % COLORS.length]);
     const primaryThemeColor = themePalette[0] || '#4f46e5';

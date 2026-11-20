@@ -335,6 +335,20 @@ export async function generateAIReport(options = {}) {
         const stddev = Math.sqrt(variance);
         const cv = mean > 0 ? ((stddev / mean) * 100) : 0;
 
+        // 초정밀 고급 통계 지표 산출
+        const stdErr = stddev / Math.sqrt(Math.max(1, count));
+        const ci95Lower = Math.max(0, mean - 1.96 * stdErr);
+        const ci95Upper = mean + 1.96 * stdErr;
+        const skewness = stddev > 0 ? (values.reduce((acc, v) => acc + Math.pow((v - mean) / stddev, 3), 0) / count) : 0;
+
+        // 지니 불평등 계수 (Gini Coefficient: 0=완전균등, 1=완전불평등)
+        const ascValues = [...values].sort((a, b) => a - b);
+        let giniNum = 0;
+        for (let i = 0; i < count; i++) {
+            giniNum += (2 * (i + 1) - count - 1) * ascValues[i];
+        }
+        const gini = sum > 0 ? Math.max(0, Math.min(1, giniNum / (count * sum))) : 0;
+
         const q1 = values[Math.floor(count * 0.25)];
         const q3 = values[Math.floor(count * 0.75)];
         const iqr = Math.max(q3 - q1, 0.0001);
@@ -356,6 +370,13 @@ export async function generateAIReport(options = {}) {
         const topBottomRatio = (bottom1 && bottom1.value > 0) ? (top1.value / bottom1.value).toFixed(1) : '∞';
         const top3Sum = sortedDesc.slice(0, 3).reduce((acc, cur) => acc + cur.value, 0);
         const top3Share = sum > 0 ? ((top3Sum / sum) * 100).toFixed(1) : '0';
+
+        const top10Count = Math.max(1, Math.round(count * 0.1));
+        const top10Sum = sortedDesc.slice(0, top10Count).reduce((acc, cur) => acc + cur.value, 0);
+        const top10Share = sum > 0 ? ((top10Sum / sum) * 100).toFixed(1) : '0';
+        const bottom10Count = Math.max(1, Math.round(count * 0.1));
+        const bottom10Sum = sortedDesc.slice(-bottom10Count).reduce((acc, cur) => acc + cur.value, 0);
+        const bottom10Share = sum > 0 ? ((bottom10Sum / sum) * 100).toFixed(1) : '0';
 
         //  데이터 특성 기반 AI 최적 보고서 유형 자동 추론
         const recommendedReport = inferBestReportType({
@@ -400,16 +421,49 @@ export async function generateAIReport(options = {}) {
             recommendRow.style.display = 'flex';
         }
 
+        // 다변량 피어슨 상관계수(r) 및 교차 통계 분석 엔진
         let multiColAnalysis = null;
-        const otherNumCols = appState.analysisResult.numericCols ? appState.analysisResult.numericCols.filter(ci => ci !== yIdx && ci !== xIdx) : [];
+        const otherNumCols = appState.analysisResult?.numericCols ? appState.analysisResult.numericCols.filter(ci => ci !== yIdx && ci !== xIdx) : [];
         if (otherNumCols.length > 0) {
-            const otherColNames = otherNumCols.map(ci => appState.parsedData.headers[ci]);
+            const crossMetrics = [];
+            otherNumCols.forEach(ci => {
+                const colName = appState.parsedData.headers[ci];
+                const colVals = rows.map(r => parseFloat(r[ci]) || 0);
+                const colSum = colVals.reduce((a, b) => a + b, 0);
+                const colMean = colSum / Math.max(1, count);
+
+                // 피어슨 상관계수 r 계산
+                let num = 0, denX = 0, denY = 0;
+                for (let i = 0; i < count; i++) {
+                    const rowIdx = items[i]?.idx !== undefined ? items[i].idx : i;
+                    const dx = (items[i]?.value || 0) - mean;
+                    const dy = (colVals[rowIdx] || 0) - colMean;
+                    num += dx * dy;
+                    denX += dx * dx;
+                    denY += dy * dy;
+                }
+                const rCorr = (denX > 0 && denY > 0) ? (num / Math.sqrt(denX * denY)) : 0;
+
+                let relType = '상관관계';
+                if (rCorr > 0.65) relType = '강한 양의 상관 (동반 성장 레버리지)';
+                else if (rCorr > 0.25) relType = '완만한 양의 상관';
+                else if (rCorr < -0.65) relType = '강한 음의 상관 (반비례 상충 트레이드오프)';
+                else if (rCorr < -0.25) relType = '완만한 음의 상관';
+                else relType = '독립적 / 낮은 상관관계';
+
+                crossMetrics.push({
+                    name: colName,
+                    sum: colSum,
+                    mean: colMean,
+                    corr: rCorr,
+                    corrLabel: relType
+                });
+            });
+
             multiColAnalysis = {
-                names: otherColNames,
-                info: otherColNames.map(name => {
-                    const s = appState.analysisResult.numericStats[name];
-                    return s ? `${name}(총합: ${fmt(s.sum || 0)}, 평균: ${fmt(Math.round(s.mean || 0))})` : name;
-                }).join(', ')
+                metrics: crossMetrics,
+                names: crossMetrics.map(m => m.name),
+                summaryText: crossMetrics.map(m => `• <strong>[${m.name}]</strong>: 총합 ${fmt(m.sum)} / 평균 ${fmt(Math.round(m.mean))} (피어슨 상관계수 r: <strong style="color:${m.corr > 0 ? '#2563eb' : '#dc2626'};">${m.corr.toFixed(2)}</strong> — <em>${m.corrLabel}</em>)`).join('<br>')
             };
         }
 
@@ -503,6 +557,46 @@ export async function generateAIReport(options = {}) {
             tableRowsHtml += '</tr>';
         });
 
+        // 벤치마킹 분석용 주요 개체 선정 (Top 3, Median 부근 개체, Bottom 2)
+        const benchmarkList = [];
+        if (sortedDesc.length > 0) {
+            benchmarkList.push({ rank: '🥇 1위 (챔피언)', item: sortedDesc[0], tier: '최우수 핵심축', note: `전사 실적의 ${(sortedDesc[0].value / (sum || 1) * 100).toFixed(1)}%를 견인하는 최고 성과 개체로, 벤치마킹 표준 모델로 지정 권고` });
+        }
+        if (sortedDesc.length > 1) {
+            benchmarkList.push({ rank: '🥈 2위 (상위 선두)', item: sortedDesc[1], tier: '상위 리더', note: `1위와 함께 전사 핵심 캐시카우 그룹을 형성하며 견고한 성장률 유지 중` });
+        }
+        if (sortedDesc.length > 2) {
+            benchmarkList.push({ rank: '🥉 3위 (상위 진입)', item: sortedDesc[2], tier: '상위 리더', note: `차세대 1~2위 도약 잠재력을 보유한 핵심 전략 육성 개체` });
+        }
+        if (sortedDesc.length > 5) {
+            const midIdx = Math.floor(sortedDesc.length / 2);
+            benchmarkList.push({ rank: `📊 중앙값 (#${midIdx + 1})`, item: sortedDesc[midIdx], tier: '중위 표준군', note: `전사 중간 표준선에 위치하며, 소액 집중 지원 시 상위권 도약 레버리지 효과 최대` });
+        }
+        if (sortedDesc.length > 4) {
+            const b2 = sortedDesc[sortedDesc.length - 2];
+            benchmarkList.push({ rank: `⚠️ 하위 2위 (#${sortedDesc.length - 1})`, item: b2, tier: '관리 필요군', note: `원가율 및 운영 공수 집중 점검 필요, 손익분기 한계선(BEP) 근접` });
+        }
+        if (sortedDesc.length > 3) {
+            const b1 = sortedDesc[sortedDesc.length - 1];
+            benchmarkList.push({ rank: `🚨 최하위 (#${sortedDesc.length})`, item: b1, tier: '중점 개선군', note: `1위 대비 ${topBottomRatio}배 격차 발생, 긴급 원인 실사 및 업무 프로세스 재조정(PIP) 요망` });
+        }
+
+        const benchmarkRowsHtml = benchmarkList.map(b => {
+            const ratioToMean = mean > 0 ? (b.item.value / mean).toFixed(2) : '1.00';
+            const share = sum > 0 ? ((b.item.value / sum) * 100).toFixed(1) : '0';
+            const badgeColor = b.tier.includes('최우수') ? '#10b981' : b.tier.includes('리더') ? '#3b82f6' : b.tier.includes('표준') ? '#6366f1' : b.tier.includes('관리') ? '#f59e0b' : '#ef4444';
+            return `
+                <tr>
+                    <td style="font-weight:700; color:#1e293b;">${b.rank}</td>
+                    <td style="font-weight:700;"><strong>${b.item.label}</strong></td>
+                    <td style="text-align:right; font-weight:800; color:#1e1b4b;">${fmt(b.item.value)}</td>
+                    <td style="text-align:right; font-weight:600; color:#475569;">${share}%</td>
+                    <td style="text-align:center;"><span style="background:#f1f5f9; padding:2px 7px; border-radius:4px; font-weight:700; color:${parseFloat(ratioToMean) >= 1 ? '#10b981' : '#ef4444'};">${ratioToMean}배</span></td>
+                    <td style="font-size:11.5px; color:#475569;"><span style="display:inline-block; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px; background:${badgeColor}; color:#fff; margin-right:4px;">${b.tier}</span>${b.note}</td>
+                </tr>
+            `;
+        }).join('');
+
         const finalReportHtml = `
             <div class="report-doc-top">
                 <span class="report-doc-confidential">● CONFIDENTIAL / 내부 경영 분석용</span>
@@ -574,6 +668,26 @@ export async function generateAIReport(options = {}) {
                         <div class="report-kpi-val" style="color:${cv > 50 ? '#f59e0b' : '#3b82f6'};">${cv.toFixed(1)}%</div>
                     </div>
                 </div>
+
+                <!-- 보조 정밀 통계 지표 4개 행 -->
+                <div style="margin-top:8px; display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">
+                    <div class="report-kpi-card" style="background:#f8fafc; border:1px solid #e2e8f0; padding:6px 8px;">
+                        <div class="report-kpi-label">95% 신뢰구간 (CI)</div>
+                        <div class="report-kpi-val" style="font-size:12px; color:#475569;">${fmt(Math.round(ci95Lower))} ~ ${fmt(Math.round(ci95Upper))}</div>
+                    </div>
+                    <div class="report-kpi-card" style="background:#f8fafc; border:1px solid #e2e8f0; padding:6px 8px;">
+                        <div class="report-kpi-label">지니 계수 (Gini)</div>
+                        <div class="report-kpi-val" style="font-size:12.5px; color:${gini > 0.4 ? '#ef4444' : '#10b981'};">${gini.toFixed(3)} (${gini > 0.4 ? '고도 불균형' : '적정 분산'})</div>
+                    </div>
+                    <div class="report-kpi-card" style="background:#f8fafc; border:1px solid #e2e8f0; padding:6px 8px;">
+                        <div class="report-kpi-label">비대칭도 왜도 (Skewness)</div>
+                        <div class="report-kpi-val" style="font-size:12.5px; color:#3b82f6;">${skewness.toFixed(2)} (${skewness > 0.5 ? '우측 꼬리형' : skewness < -0.5 ? '좌측 꼬리형' : '정규 대칭'})</div>
+                    </div>
+                    <div class="report-kpi-card" style="background:#f8fafc; border:1px solid #e2e8f0; padding:6px 8px;">
+                        <div class="report-kpi-label">상위 10% vs 하위 10% 점유</div>
+                        <div class="report-kpi-val" style="font-size:12.5px; color:#8b5cf6;">${top10Share}% vs ${bottom10Share}%</div>
+                    </div>
+                </div>
             </div>
 
             <!-- 섹션 3: 2D 데이터 시각화 분석 차트 -->
@@ -618,16 +732,60 @@ export async function generateAIReport(options = {}) {
                 </div>
             </div>
 
+            <!-- 섹션 4-2: 세부 분위수 분포 및 상·하위 개체 정밀 분석표 -->
+            <div class="report-section">
+                <div class="report-section-title">📋 4-2. 주요 핵심 개체 벤치마킹 및 성과 매트릭스 (Performance Benchmarking)</div>
+                <table class="report-table" style="font-size:11.5px;">
+                    <thead>
+                        <tr>
+                            <th style="width:14%;">분류</th>
+                            <th style="width:18%;">항목명 (${xColName})</th>
+                            <th style="width:16%; text-align:right;">${yColName} 실적</th>
+                            <th style="width:12%; text-align:right;">점유 비중</th>
+                            <th style="width:12%; text-align:center;">평균 대비</th>
+                            <th style="width:28%;">AI 전략적 평가 및 권고</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${benchmarkRowsHtml}
+                    </tbody>
+                </table>
+            </div>
+
+            ${multiColAnalysis ? `
+            <!-- 섹션 4-3: 다변량 교차 분석 및 상관관계 진단 -->
+            <div class="report-section">
+                <div class="report-section-title">📊 4-3. 다변량 교차 분석 및 상관관계 진단 (Cross-Variable Correlation)</div>
+                <div class="report-exec-box" style="background:#f8fafc; border-left:4px solid #8b5cf6; line-height:1.7;">
+                    <div style="font-weight:700; color:#1e293b; margin-bottom:6px;">📈 [${yColName}] 지표와 타 수치 열 간의 통계적 상관성 및 효율 분석:</div>
+                    <div style="font-size:12.5px;">${multiColAnalysis.summaryText}</div>
+                    <div style="margin-top:8px; font-size:11.5px; color:#64748b;">
+                        * 피어슨 상관계수(r)가 0.65 이상일 경우 동일한 동력으로 성장하는 핵심 레버리지 지표이며, -0.65 이하일 경우 트레이드오프(상충 비용) 관리 지표로 집중 관리해야 합니다.
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
             <!-- 섹션 5: AI 전략적 제언 및 실행 권고사항 -->
             <div class="report-section">
                 <div class="report-section-title">🎯 5. AI 전략적 제언 및 비즈니스 실행 권고 (Action Items)</div>
                 <div class="report-recom-list">
                     ${aiGeneratedSections.recommendations.map((rec, idx) => `
-                    <div class="report-recom-item">
-                        <span class="report-recom-badge">${idx + 1}</span>
-                        <div class="report-recom-content report-editable" contenteditable="${appState.isReportEditMode}">
-                            <div style="font-size:14px; font-weight:700; margin-bottom:5px; color:var(--theme-text, #1e293b);">${rec.title}</div>
-                            <div style="font-size:13px; line-height:1.6; color:var(--theme-text-muted, #475569);">${rec.desc}</div>
+                    <div class="report-recom-item" style="padding:12px 16px; margin-bottom:8px;">
+                        <span class="report-recom-badge" style="width:22px; height:22px; font-size:11px;">${idx + 1}</span>
+                        <div class="report-recom-content report-editable" contenteditable="${appState.isReportEditMode}" style="width:100%;">
+                            <div style="font-size:13.5px; font-weight:800; color:#1e1b4b; margin-bottom:4px;">${rec.title}</div>
+                            <div style="font-size:12.5px; line-height:1.65; color:#334155; margin-bottom:6px;">${rec.desc}</div>
+                            ${rec.steps ? `
+                            <div style="background:#f1f5f9; border-radius:5px; padding:6px 10px; font-size:11.5px; color:#475569; margin-bottom:6px; line-height:1.5;">
+                                <strong>🛠️ 세부 실행 방안:</strong> ${rec.steps}
+                            </div>
+                            ` : ''}
+                            <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:11px; color:#64748b;">
+                                <span>⏱️ <strong>추진 일정:</strong> ${rec.timeline || '1~3개월 내 착수'}</span>
+                                <span>🎯 <strong>목표 KPI:</strong> ${rec.kpi || '지표 +15% 개선'}</span>
+                                <span>🏢 <strong>주관 부서:</strong> ${rec.owner || '전사 경영기획 및 유관 본부'}</span>
+                            </div>
                         </div>
                     </div>
                     `).join('')}
@@ -1017,32 +1175,53 @@ export function buildBuiltinAIReport(ctx = {}) {
         title = `[종합 경영 전략] ${xColName}별 ${yColName} 심층 분석 및 비즈니스 인텔리전스 보고서`;
         subtitle = `데이터 기반 의사결정 지원을 위한 ${count}개 개체 실적 평가, 파레토 집중도 및 이상치 검증 요약`;
         executiveSummary = `
-            <p><strong>1. 종합 경영 성과 총괄 브리핑:</strong> 본 보고서는 <strong>${fileName}</strong> 데이터셋의 총 <strong>${count.toLocaleString()}개</strong> ${xColName} 항목을 대상으로, <strong>${yColName}</strong> 지표를 3D 공간 모델링 및 다변량 통계 기법으로 정밀 교차 검증한 종합 경영 분석서입니다. 전체 실적 합계는 <strong>${fmt(sum)}</strong>이며, 개체당 평균 실적은 <strong>${fmt(Math.round(mean))}</strong>, 중앙값(Median)은 <strong>${fmt(Math.round(median))}</strong>으로 집계되었습니다. 산술평균과 중앙값 간의 편차는 <strong>${fmt(Math.abs(Math.round(mean - median)))}</strong> 수준으로, 상위 일부 품목에 의해 전체 평균이 견인되는 구조를 명확히 드러냅니다.</p>
+            <p><strong>1. 종합 경영 성과 총괄 브리핑:</strong> 본 보고서는 <strong>${fileName}</strong> 데이터셋의 총 <strong>${count.toLocaleString()}개</strong> ${xColName} 항목을 대상으로, <strong>${yColName}</strong> 지표를 3D 공간 모델링 및 다변량 통계 기법으로 정밀 교차 검증한 종합 경영 분석서입니다. 전체 실적 합계는 <strong>${fmt(sum)}</strong>이며, 개체당 평균 실적은 <strong>${fmt(Math.round(mean))}</strong>, 중앙값(Median)은 <strong>${fmt(Math.round(median))}</strong>으로 집계되었습니다. 산술평균과 중앙값 간의 절대 편차는 <strong>${fmt(Math.abs(Math.round(mean - median)))}</strong> 수준으로, 상위 일부 품목에 의해 전체 평균이 견인되는 ${mean > median ? '우측 꼬리 비대칭(Positive Skewness)' : '좌측 꼬리 비대칭'} 구조를 명확히 드러냅니다.</p>
             <p><strong>2. 파레토 80/20 집중도 및 핵심 성장 엔진:</strong> 파레토 분석 결과, 상위 <strong>${top20Count}개(20%)</strong> 핵심 항목이 전체 성과의 <strong>${top20Share}%</strong>를 견인하고 있어 매우 강력한 성장 모멘텀을 형성하고 있습니다. 특히 1위 챔피언 항목인 <strong>[${top1.label}]</strong>의 단독 실적은 <strong>${fmt(top1.value)}</strong>(점유율 ${top1Share}%)에 달하며, 상위 3개사([${top1.label}], [${top2.label}], [${top3.label}])의 합산 비중은 <strong>${calcTop3Ratio}%</strong>를 차지하고 있습니다. 이들 핵심 상위 항목의 안정적 실적 방어와 지속적인 자원 투자가 조직 전체의 성패를 가르는 핵심 척도입니다.</p>
             <p><strong>3. 상·하위 격차 스프레드 및 리스크 진단:</strong> 반면 최하위 개체 <strong>[${bottom1.label}](${fmt(bottom1.value)})</strong>를 비롯한 하위권 그룹과의 스프레드 배율은 <strong>${topBottomRatio}배</strong>(격차: ${fmt(range)})에 달해 심각한 실적 양극화가 관찰됩니다. 변동계수(CV)는 <strong>${cv.toFixed(1)}%</strong>로 비교적 높은 변동성을 나타내며, 1.5×IQR 판정 기준을 벗어난 통계적 이상치(Anomaly)가 총 <strong>${outliers.length}건</strong> 포착되었습니다. 이러한 편중성은 상위 거래선 변동 시 전사 손익이 급변할 수 있는 구조적 취약점을 내포합니다.</p>
-            <p><strong>4. 다변량 상관 분석 및 전략적 제언 요약:</strong> ${multiColAnalysis ? `연계된 다른 수치 지표(${multiColAnalysis.names.slice(0, 3).join(', ')})와의 종합적 교차 분석 결과, 단순 단일 지표 성장뿐 아니라 전사적 시너지 창출이 가능한 전략적 레버리지 포인트가 확인되었습니다.` : '단일 지표의 단기적 성과 극대화와 더불어 장기적 리스크 완화를 위한 균형 잡힌 접근이 필요합니다.'} 이를 바탕으로 고성과 개체의 모범 사례 확산, 중위권 잠재 성장군 육성, 하위권 한계 개체 정리를 포함한 5대 핵심 비즈니스 실행 과제를 제언합니다.</p>
+            <p><strong>4. 다변량 상관 분석 및 전략적 레버리지:</strong> ${multiColAnalysis ? `연계된 타 수치 지표(${multiColAnalysis.names.slice(0, 3).join(', ')})와의 종합적 교차 분석 결과, 단순 단일 지표 성장뿐 아니라 전사적 시너지 창출이 가능한 전략적 레버리지 포인트가 확인되었습니다.` : '단일 지표의 단기적 성과 극대화와 더불어 장기적 리스크 완화를 위한 균형 잡힌 접근이 필요합니다.'} 상위 선두권의 높은 자본 효율성을 시스템화하고, 자원 투입 대비 성과 회수율이 낮은 하위권 개체에 대한 정밀 감사가 요구됩니다.</p>
+            <p><strong>5. 전사 경영 실행 로드맵 요약:</strong> 데이터 기반 의사결정의 완성을 위해 ① 챔피언 우수 사례(Best Practice) 전파, ② 중위권 잠재 성장 허리 라인 강화, ③ 하위 10% 한계 개체 구조조정(PIP), ④ 이상치 실시간 조기경보, ⑤ 3D 대시보드 주간 경영회의 표준화를 5대 실행 과제로 확정하여 전사적 실행을 권고합니다.</p>
         `;
 
         recommendations = [
             {
                 title: `고성과 우수 챔피언 [${top1.label}]의 성공 모범 사례(Best Practice) 전사 확산`,
-                desc: `전체 실적의 ${top1Share}%를 달성한 최상위 항목의 핵심 성공 요인(영업 채널, 제품 매력도, 고객 접점 등)을 정밀 분석하고, 이를 표준 가이드라인으로 정립하여 중위권 항목에 전파함으로써 전반적인 실적 상향 평준화를 견인하십시오.`
+                desc: `전체 실적의 ${top1Share}%를 달성한 최상위 항목의 핵심 성공 요인(영업 채널, 제품 매력도, 고객 접점 등)을 정밀 분석하고, 이를 표준 가이드라인으로 정립하여 중위권 항목에 전파함으로써 전반적인 실적 상향 평준화를 견인하십시오.`,
+                steps: `1단계: 최상위 성과팀 인터뷰 및 핵심 성공 동인 도출 → 2단계: 핵심 세일즈 플레이북 및 마케팅 자산 표준화 → 3단계: 중위권 실무진 대상 사내 워크숍 진행 및 적용 평가`,
+                timeline: `1~2개월 내 완료`,
+                kpi: `중위권 평균 실적 +18% 신장 및 상위권 쏠림 완화`,
+                owner: `전사 전략기획실 & 핵심 영업마케팅본부`
             },
             {
                 title: `중위권 잠재 항목(Rank 20~50%) 집중 지원을 통한 제2의 핵심 성장 엔진 육성`,
-                desc: `평균치(${fmt(Math.round(mean))}) 부근에 위치한 중간 그룹 항목들에 선별적 자원과 타겟 마케팅 지원을 투입할 경우, 상위권 추가 확대 대비 최소 비용으로 최대의 전체 실적 증대 레버리지(추정 효과: +12~18%)를 달성할 수 있습니다.`
+                desc: `평균치(${fmt(Math.round(mean))}) 부근에 위치한 중간 그룹 항목들에 선별적 자원과 타겟 마케팅 지원을 투입할 경우, 상위권 추가 확대 대비 최소 비용으로 최대의 전체 실적 증대 레버리지(추정 효과: +12~18%)를 달성할 수 있습니다.`,
+                steps: `전체 표본 중 잠재 성장률이 높은 3~5개 중위권 후보군 선정 → 성장 가속 펀드 및 추가 인력 우선 배정 → 분기별 전환 성과 트래킹`,
+                timeline: `3~6개월 집중 추진`,
+                kpi: `차세대 리더군 2개소 추가 배출 및 매출 기여도 +20% 확대`,
+                owner: `사업개발팀 및 신사업추진단`
             },
             {
                 title: `하위 10% 한계 개체에 대한 구조조정 및 생산성 개선 계획(PIP) 단행`,
-                desc: `최하위군 [${bottom1.label}] 등 성과가 지속 부진한 개체의 원인을 철저히 실사하고, 손익분기점(BEP) 미달 개체에 대해서는 품목 통폐합, 자원 회수, 또는 서비스 전환을 단행하여 고정비 누수를 차단하십시오.`
+                desc: `최하위군 [${bottom1.label}] 등 성과가 지속 부진한 개체의 원인을 철저히 실사하고, 손익분기점(BEP) 미달 개체에 대해서는 품목 통폐합, 자원 회수, 또는 서비스 전환을 단행하여 고정비 누수를 차단하십시오.`,
+                steps: `최하위군 원가율 및 고정 운영비 전수 감사 → 60일 생산성 개선 프로그램(PIP) 가동 → 미달 시 품목 라인업 통폐합 및 자원 회수`,
+                timeline: `60일 내 평가 후 조치`,
+                kpi: `하위권 누적 적자 및 비효율 비용 연간 25% 이상 절감`,
+                owner: `경영관리팀 및 재무감사팀`
             },
             {
                 title: `1.5×IQR 이상치(${outliers.length}건) 및 변동성(CV ${cv.toFixed(1)}%) 조기 경보 모니터링 가동`,
-                desc: `통계적 관리 한계선([${fmt(Math.max(0, Math.round(lowerLimit)))} ~ ${fmt(Math.round(upperLimit))}])을 시스템에 상시 설정하여, 월간 실적 집계 시 급등·급락 이상 징후를 조기에 감지하고 리스크를 선제 통제하십시오.`
+                desc: `통계적 관리 한계선([${fmt(Math.max(0, Math.round(lowerLimit)))} ~ ${fmt(Math.round(upperLimit))}])을 시스템에 상시 설정하여, 월간 실적 집계 시 급등·급락 이상 징후를 조기에 감지하고 리스크를 선제 통제하십시오.`,
+                steps: `이상치 경보 임계치 자동 감지 알고리즘 대시보드 탑재 → 한계선 이탈 시 담당자 및 임원진 실시간 알림 피드백 → 원인 규명 보고서 의무화`,
+                timeline: `즉시 시스템 상시 가동`,
+                kpi: `이상 데이터 감지 및 대응 리드타임 24시간 이내 단축`,
+                owner: `데이터 인텔리전스팀 및 리스크관리실`
             },
             {
                 title: `3D 공간 시각화 및 2D 다축 대시보드 기반 전사 데이터 경영 체계 정착`,
-                desc: `본 시스템의 3D 공간 시각화와 2D 차트를 정기 경영진 회의의 표준 분석 도구로 채택하여, 직관적이고 객관적인 데이터 기반 의사결정 속도를 기존 대비 3배 이상 가속화하십시오.`
+                desc: `본 시스템의 3D 공간 시각화와 2D 차트를 정기 경영진 회의의 표준 분석 도구로 채택하여, 직관적이고 객관적인 데이터 기반 의사결정 속도를 기존 대비 3배 이상 가속화하십시오.`,
+                steps: `주간/월간 경영회의 시 3D 인터랙티브 화면 및 A4 자동 보고서 표준 채택 → 각 부서별 타임라인 진도율 시각화 공유 → 데이터 기반 신속 승인`,
+                timeline: `차기 분기 경영회의부터 전면 도입`,
+                kpi: `경영 회의 보고서 작성 공수 80% 절감 및 의사결정 주기 3배 단축`,
+                owner: `최고경영진(C-Level) 및 전사 조직장`
             }
         ];
     }
@@ -1126,7 +1305,11 @@ export function buildBuiltinAIReport(ctx = {}) {
         spreadDiagnostic: applyToneToText(spreadDiagnostic, tone),
         recommendations: recommendations.map(r => ({
             title: r.title,
-            desc: applyToneToText(r.desc, tone)
+            desc: applyToneToText(r.desc, tone),
+            steps: applyToneToText(r.steps || '', tone),
+            timeline: r.timeline || '1~3개월 내',
+            kpi: r.kpi || '지표 +15% 개선',
+            owner: r.owner || '경영전략 및 유관 사업부'
         }))
     };
 }

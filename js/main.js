@@ -146,9 +146,13 @@ export function processData(sourceName) {
         const numericColumns = appState.analysisResult?.numericCols || [];
         mobileTimelineAction.hidden = numericColumns.length < 2;
     }
-    // 데이터 입력 시 3D 스타일을 '3D 자동 추천(auto)'으로 자동 선택
+    // 데이터 입력 시 3D 및 2D 시각화 스타일을 모두 'AI 자동 추천(auto)'으로 기본 설정
     appState.current3DStyle = 'auto';
     sync3DStyleUI('auto');
+    const chartTypeSelect = $('chart-type-select');
+    if (chartTypeSelect) {
+        chartTypeSelect.value = 'auto';
+    }
     applyVisualization();
 
     // 4. 상태 표시줄 갱신
@@ -239,11 +243,8 @@ function bindFilterAndOptionEvents() {
         if (barStyleSelect) barStyleSelect.value = best3D;
         if (quickBarStyle) quickBarStyle.value = best3D;
 
-        const recs = getDynamicRecommendations(labels, values, appState.analysisResult);
-        const valid2DTypes = ['bar', 'horizontalBar', 'line', 'pie', 'doughnut', 'scatter', 'radar', 'polarArea'];
-        const matched2D = recs.find(r => valid2DTypes.includes(r.type === 'donut' ? 'doughnut' : r.type));
-        if (matched2D && chartTypeSelect) {
-            chartTypeSelect.value = matched2D.type === 'donut' ? 'doughnut' : matched2D.type;
+        if (chartTypeSelect) {
+            chartTypeSelect.value = 'auto';
         }
         applyVisualization();
         showToast('✨ 최적 시각화 추천(3D & 2D)이 즉시 적용되었습니다!');
